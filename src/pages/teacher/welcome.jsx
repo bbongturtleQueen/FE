@@ -40,20 +40,26 @@ const ThankText = styled.p`
   margin-bottom: 12px;
 `;
 
+const Highlight = styled.span`
+  color: #009A73;
+  font-weight: bold;
+`;
+
 const ButtonWrapper = styled.div`
   display: flex;
   gap: 28px;
   margin-top: 40px;
 `;
 
-export default function TchMain() {
-  const navigate = useNavigate();
-  const handleProblemClick = () => {
-    navigate('/tch/makeproblem');
-  };
+const StartText = styled.p`
+  font-size: 18px;
+  color: #858585;
+`;
 
-  const handleSetClick = () => {
-    navigate('/tch/chooseset');
+export default function Welcome() {
+  const navigate = useNavigate();
+  const loginClick = () => {
+    navigate('/tch/login');
   };
 
   return (
@@ -62,15 +68,17 @@ export default function TchMain() {
         <Heart src={HeartImg} alt="heart" />
       </HeartWrapper>
       <WelcomeText>
-        환영합니다, 학생들의 사칙연산을 위해
+        안녕하세요, 학생들의 사칙연산을 위해
       </WelcomeText>
       <ThankText>
         저희 뿅!거북팡을 선택해주셔서 감사합니다
       </ThankText>
       <ButtonWrapper>
-        <Button onClick={handleProblemClick}>문제 만들기</Button>
-        <Button onClick={handleSetClick}>세트 고르기</Button>
+        <Button onClick={loginClick}>로그인하기</Button>
       </ButtonWrapper>
+      <StartText>
+        처음이신가요? <Highlight>회원가입하기</Highlight>
+      </StartText>
     </Container>
   );
 }

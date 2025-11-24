@@ -39,7 +39,7 @@ export default function Start() {
   const navigate = useNavigate();
 
   const handleTeacherClick = () => {
-    navigate('/tch/main');
+    navigate('/tch/welcome');
   };
 
   const handleStudentClick = () => {

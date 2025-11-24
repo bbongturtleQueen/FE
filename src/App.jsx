@@ -23,7 +23,9 @@ import MolePlay from './pages/student/mole/play.jsx';
 
 
 
-import TchMain from './pages/teacher/tchmain.jsx';
+import Welcome from './pages/teacher/welcome.jsx';
+import Login from './pages/teacher/login.jsx';
+import Ready from './pages/teacher/ready.jsx';
 import MakeProblem from './pages/teacher/makeproblem.jsx';
 
 
@@ -53,8 +55,10 @@ export default function App() {
         <Route path="/std/mole/play" element={<MolePlay />} />
 
 
-        <Route path="/tch/main" element={<TchMain/>} />
+        <Route path="/tch/welcome" element={<Welcome/>} />
+        <Route path="/tch/login" elemnet={<Login/>} />
         <Route path="/tch/makeproblem" element={<MakeProblem />} />
+        <Route path="tch/ready" element={<Ready/>}/>
       </Routes>
     </BrowserRouter>
   );
