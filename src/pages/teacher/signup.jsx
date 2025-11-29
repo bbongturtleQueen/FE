@@ -51,12 +51,12 @@ export default function TurtleNickname() {
   return (
     <Container>
       <ContentModal
-        buttonText="로그인하기"
+        buttonText="회원가입하기"
         onSubmit={handleSubmit}
         onClose={() => {}}
         disabled={!isNicknameValid}
       >
-        <Title>로그인</Title>
+        <Title>회원가입</Title>
         <NicknameInput
           type="text"
           placeholder="아이디를 입력하세요.."

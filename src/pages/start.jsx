@@ -20,7 +20,7 @@ const Container = styled.div`
 `;
 
 const LogoContainer = styled.div`
-  width: 500px;
+  width: 350px;
 `;
 
 const Logo = styled.img`
