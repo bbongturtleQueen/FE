@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import ContentModal from '../../components/contentmodal.jsx';
 
 const Container = styled.div`
   width: 1180px;
@@ -10,22 +9,33 @@ const Container = styled.div`
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background-color: #E3FFE9;
+  background-color: #9DB6AF;
 `;
 
-const Title = styled.p`
-  font-size: 24px;
+const SignupBox = styled.div`
+  width: 500px;
+  background-color: #FFFFFF;
+  border-radius: 24px;
+  padding: 50px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+`;
+
+const Title = styled.h2`
+  font-size: 32px;
   font-weight: bold;
-  margin-bottom: 24px;
+  color: #000000;
+  margin-bottom: 20px;
 `;
 
-const NicknameInput = styled.input`
+const Input = styled.input`
   width: 400px;
   padding: 16px 20px;
-  border: 2px solid #B4B4B4;
+  border: 1px solid #B4B4B4;
   border-radius: 10px;
   font-size: 18px;
-  margin-bottom: 40px;
+  margin-bottom: 16px;
 
   &:focus {
     outline: none;
@@ -38,33 +48,138 @@ const NicknameInput = styled.input`
   }
 `;
 
-export default function TurtleNickname() {
-  const navigate = useNavigate();
-  const [nickname, setNickname] = useState('');
+const ErrorMessage = styled.p`
+  color: #EF4444;
+  font-weight: bold;
+  font-size: 16px;
+  margin-bottom: 8px;
+`;
 
-  const handleSubmit = () => {
-    navigate('/std/turtle/wait', { state: { nickname } });
+const SignupButton = styled.button`
+  width: 460px;
+  padding: 20px;
+  background-color: ${props => props.disabled ? '#D7D7D7' : '#4ADE80'};
+  border: none;
+  border-radius: 30px;
+  color: white;
+  font-size: 20px;
+  font-weight: bold;
+  margin-top: 24px;
+  cursor: ${props => props.disabled ? 'not-allowed' : 'pointer'};
+  transition: all 0.3s ease;
+
+  &:hover {
+    background-color: ${props => props.disabled ? '#D7D7D7' : '#22C55E'};
+  }
+`;
+
+export default function Signup() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    id: '',
+    password: '',
+    confirmPassword: ''
+  });
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    setError(''); // 입력하면 에러 메시지 지우기
   };
 
-  const isNicknameValid = nickname.trim() !== '';
+  const isFormValid = () => {
+    return formData.id && 
+           formData.password && 
+           formData.confirmPassword &&
+           formData.password === formData.confirmPassword;
+  };
+
+  const handleSignup = async () => {
+    // 비밀번호 확인
+    if (formData.password !== formData.confirmPassword) {
+      setError('비밀번호가 일치하지 않아요!');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      // 백엔드 API 호출
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/signup`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: formData.id,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // 회원가입 성공
+        alert('회원가입이 완료되었어요!');
+        navigate('/login'); // 로그인 페이지로 이동
+      } else {
+        // 회원가입 실패
+        setError(data.message || '이미 사용 중인 아이디예요!');
+      }
+    } catch (err) {
+      console.error('API 에러:', err);
+      setError('서버 연결에 실패했어요. 다시 시도해주세요.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Container>
-      <ContentModal
-        buttonText="회원가입하기"
-        onSubmit={handleSubmit}
-        onClose={() => {}}
-        disabled={!isNicknameValid}
-      >
+      <SignupBox>
         <Title>회원가입</Title>
-        <NicknameInput
+
+        <Input
           type="text"
+          name="id"
           placeholder="아이디를 입력하세요.."
-          value={nickname}
+          value={formData.id}
+          onChange={handleChange}
           autoComplete="off"
-          onChange={(e) => setNickname(e.target.value)}
         />
-      </ContentModal>
+
+        <Input
+          type="password"
+          name="password"
+          placeholder="비밀번호를 입력하세요.."
+          value={formData.password}
+          onChange={handleChange}
+          autoComplete="new-password"
+        />
+
+        <Input
+          type="password"
+          name="confirmPassword"
+          placeholder="비밀번호를 다시 입력하여 확인하세요.."
+          value={formData.confirmPassword}
+          onChange={handleChange}
+          autoComplete="new-password"
+        />
+
+        {error && <ErrorMessage>{error}</ErrorMessage>}
+
+        <SignupButton 
+          onClick={handleSignup} 
+          disabled={!isFormValid() || loading}
+        >
+          {loading ? '처리 중...' : '회원가입 하기'}
+        </SignupButton>
+      </SignupBox>
     </Container>
   );
 }

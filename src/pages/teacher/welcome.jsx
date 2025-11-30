@@ -43,6 +43,12 @@ const ThankText = styled.p`
 const Highlight = styled.span`
   color: #009A73;
   font-weight: bold;
+  cursor: pointer;
+
+  &:hover {
+    color:rgb(0, 106, 80);
+    transform: translateY(-4px);
+  }
 `;
 
 const ButtonWrapper = styled.div`
@@ -61,6 +67,9 @@ export default function Welcome() {
   const loginClick = () => {
     navigate('/tch/login');
   };
+  const signupClick = () => {
+    navigate('/tch/signup');
+  }
 
   return (
     <Container>
@@ -77,7 +86,7 @@ export default function Welcome() {
         <Button onClick={loginClick}>로그인하기</Button>
       </ButtonWrapper>
       <StartText>
-        처음이신가요? <Highlight>회원가입하기</Highlight>
+        처음이신가요? <Highlight onClick={signupClick}>회원가입하기</Highlight>
       </StartText>
     </Container>
   );

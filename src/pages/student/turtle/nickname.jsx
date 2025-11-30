@@ -22,7 +22,7 @@ const Title = styled.p`
 const NicknameInput = styled.input`
   width: 400px;
   padding: 16px 20px;
-  border: 2px solid #B4B4B4;
+  border: 1px solid #B4B4B4;
   border-radius: 10px;
   font-size: 18px;
   margin-bottom: 40px;

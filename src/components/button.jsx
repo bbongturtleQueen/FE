@@ -3,8 +3,8 @@ import styled from 'styled-components';
 
 const StyledButton = styled.button`
   display: flex;
-  width: 250px;
-  padding: 24px 28px;
+  width: 260px;
+  padding: 24px 24px;
   align-items: center;
   justify-content: center;
   font-size: 20px;
@@ -15,7 +15,7 @@ const StyledButton = styled.button`
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: transparent;
   color: #4ade80;
-  border: 4px solid #4ade80;
+  border: 3px solid #4ade80;
 
   &:hover {
     background: #4ade80;
