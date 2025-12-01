@@ -177,7 +177,7 @@ export default function Signup() {
           onClick={handleSignup} 
           disabled={!isFormValid() || loading}
         >
-          {loading ? '처리 중...' : '회원가입 하기'}
+          {loading ? '처리 중...' : '회원가입 완료'}
         </SignupButton>
       </SignupBox>
     </Container>

@@ -57,7 +57,7 @@ export default function App() {
 
 
         <Route path="/tch/welcome" element={<Welcome/>} />
-        <Route path="/tch/login" elemnet={<Login/>} />
+        <Route path="/tch/login" element={<Login/>} />
         <Route path="/tch/signup" element={<Signup />} />
         <Route path="/tch/makeproblem" element={<MakeProblem />} />
         <Route path="/tch/ready" element={<Ready/>}/>
