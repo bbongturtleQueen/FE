@@ -25,9 +25,10 @@ import MolePlay from './pages/student/mole/play.jsx';
 
 import Welcome from './pages/teacher/welcome.jsx';
 import Login from './pages/teacher/login.jsx';
+import Signup from './pages/teacher/signup.jsx';
 import Ready from './pages/teacher/ready.jsx';
 import MakeProblem from './pages/teacher/makeproblem.jsx';
-import Signup from './pages/teacher/signup.jsx';
+import ChooseSet from './pages/teacher/chooseset.jsx';
 
 
 export default function App() {
@@ -59,8 +60,9 @@ export default function App() {
         <Route path="/tch/welcome" element={<Welcome/>} />
         <Route path="/tch/login" element={<Login/>} />
         <Route path="/tch/signup" element={<Signup />} />
-        <Route path="/tch/makeproblem" element={<MakeProblem />} />
         <Route path="/tch/ready" element={<Ready/>}/>
+        <Route path="/tch/makeproblem" element={<MakeProblem />} />
+        <Route path="/tch/chooseset" element={<ChooseSet/>} />
       </Routes>
     </BrowserRouter>
   );

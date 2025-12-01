@@ -53,7 +53,7 @@ const ButtonWrapper = styled.div`
 export default function TurtleWait() {
   const location = useLocation();
   const navigate = useNavigate();
-  const nickname = location.state?.nickname || '학생';
+  const nickname = location.state?.nickname || 'student';
   const handleGameStartClick = () => {
     navigate('/std/turtle/ready');
   };

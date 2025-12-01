@@ -129,7 +129,7 @@ export default function Rank() {
     <Container>
       <ModalBox>
         <CloseButton onClick={handleClose}>×</CloseButton>
-        <Title>거북이 등딱지 순위</Title>
+        <Title>🏆 거북이 등딱지 순위</Title>
         
         <RankingList>
           {rankings.map((player) => {

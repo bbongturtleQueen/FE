@@ -15,7 +15,7 @@ const Overlay = styled.div`
 `;
 
 const ModalBox = styled.div`
-  width: 1000px;
+  width: 800px;
   max-height: 650px;
   background-color: #FFFFFF;
   border-radius: 24px;
@@ -50,7 +50,7 @@ const Title = styled.h2`
 `;
 
 const SetNameInput = styled.input`
-  width: 100%;
+  width: 760px;
   padding: 14px 20px;
   border: 2px solid #D1D5DB;
   border-radius: 12px;
@@ -67,21 +67,14 @@ const SetNameInput = styled.input`
   }
 `;
 
-const SubTitle = styled.h3`
-  font-size: 18px;
-  font-weight: bold;
-  color: #000000;
-  margin-bottom: 8px;
-`;
-
 const Instruction = styled.p`
   font-size: 14px;
   color: #B4B4B4;
-  margin-bottom: 20px;
+  margin-top: -8px;
 `;
 
 const ProblemScrollArea = styled.div`
-  max-height: 250px;
+  max-height: 160px;
   overflow-y: auto;
   margin-bottom: 20px;
   
@@ -115,11 +108,11 @@ const ProblemNumber = styled.div`
 `;
 
 const InputBox = styled.input`
-  width: 60px;
-  padding: 8px;
+  width: 50px;
+  padding: 12px;
   border: 2px solid #D1D5DB;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   text-align: center;
 
   &:focus {
@@ -129,16 +122,16 @@ const InputBox = styled.input`
 
   &::placeholder {
     color: #D1D5DB;
-    font-size: 12px;
+    font-size: 16px;
   }
 `;
 
 const OperatorSelect = styled.select`
-  width: 70px;
-  padding: 8px;
+  width: 80px;
+  padding: 12px;
   border: 2px solid #D1D5DB;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: 16px;
   text-align: center;
   cursor: pointer;
 
@@ -154,7 +147,7 @@ const Label = styled.span`
 `;
 
 const AddButton = styled.button`
-  width: 100%;
+  width: 800px;
   padding: 14px;
   background-color: transparent;
   border: 2px dashed #D1D5DB;
@@ -162,6 +155,7 @@ const AddButton = styled.button`
   color: #B4B4B4;
   font-size: 14px;
   cursor: pointer;
+  margin-top: 12px;
   margin-bottom: 20px;
 
   &:hover {
@@ -171,7 +165,7 @@ const AddButton = styled.button`
 `;
 
 const NextButton = styled.button`
-  width: 100%;
+  width: 800px;
   padding: 16px;
   background-color: ${props => props.disabled ? '#D1D5DB' : '#4ADE80'};
   border: none;
@@ -189,7 +183,7 @@ const NextButton = styled.button`
 export default function ProblemModal({ onClose, onSubmit }) {
   const [setName, setSetName] = useState('');
   const [problems, setProblems] = useState([
-    { num1: '', operator: '+', num2: '', answer: '', options: ['', '', '', ''] }
+    { num1: '', operator: '', num2: '', answer: '', options: ['', '', '', ''] }
   ]);
 
   const handleAddProblem = () => {
@@ -218,8 +212,32 @@ export default function ProblemModal({ onClose, onSubmit }) {
     );
   };
 
-  const handleNext = () => {
-    onSubmit({ setName, problems });
+  const handleNext = async () => {
+    const teacherId = localStorage.getItem('teacherId');
+    
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/tch/chooseset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          teacher_id: teacherId,
+          set_name: setName,
+          description: "수학 싫어! 어린이들에게, 재미있게 공부해요!",
+          problems: problems
+        })
+      });
+  
+      const data = await response.json();
+      
+      if (data.status === 'success') {
+        alert('문제 세트가 저장되었어요!');
+        navigate('/tch/chooseset');
+      }
+    } catch (err) {
+      console.error('API 에러:', err);
+    }
   };
 
   return (
@@ -235,9 +253,12 @@ export default function ProblemModal({ onClose, onSubmit }) {
           onChange={(e) => setSetName(e.target.value)}
         />
 
-        <SubTitle>문제를 만들어요</SubTitle>
+        <Title>문제를 만들어요</Title>
         <Instruction>
-          기호는 이렇게 입력해요! (덧셈: +, 뺄셈: -, 곱셈: *, 나눗셈: /)
+          원하는 기호를 선택하세요! (덧셈: + , 뺄셈: - , 곱셈: * , 나눗셈: ÷)
+        </Instruction>
+        <Instruction>
+          &gt; 보기에는 정답을 제외한 나머지 예시 답을 채워주세요!
         </Instruction>
 
         <ProblemScrollArea>
@@ -247,7 +268,7 @@ export default function ProblemModal({ onClose, onSubmit }) {
               
               <InputBox
                 type="number"
-                placeholder="ex) 3"
+                placeholder="3"
                 value={problem.num1}
                 onChange={(e) => handleProblemChange(index, 'num1', e.target.value)}
               />
@@ -256,15 +277,15 @@ export default function ProblemModal({ onClose, onSubmit }) {
                 value={problem.operator}
                 onChange={(e) => handleProblemChange(index, 'operator', e.target.value)}
               >
-                <option value="+">ex) +</option>
+                <option value="+">+</option>
                 <option value="-">-</option>
                 <option value="*">*</option>
-                <option value="/">/</option>
+                <option value="÷">÷</option>
               </OperatorSelect>
               
               <InputBox
                 type="number"
-                placeholder="ex) 5"
+                placeholder="5"
                 value={problem.num2}
                 onChange={(e) => handleProblemChange(index, 'num2', e.target.value)}
               />
@@ -273,7 +294,7 @@ export default function ProblemModal({ onClose, onSubmit }) {
               
               <InputBox
                 type="number"
-                placeholder="ex) 8"
+                placeholder="8"
                 value={problem.answer}
                 onChange={(e) => handleProblemChange(index, 'answer', e.target.value)}
               />
@@ -284,7 +305,7 @@ export default function ProblemModal({ onClose, onSubmit }) {
                 <InputBox
                   key={optIndex}
                   type="number"
-                  placeholder={`ex) ${[2, 20, 9, 15][optIndex]}`}
+                  placeholder={` ${[2, 20, 9, 15][optIndex]}`}
                   value={option}
                   onChange={(e) => handleOptionChange(index, optIndex, e.target.value)}
                 />

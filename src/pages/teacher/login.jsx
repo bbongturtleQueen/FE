@@ -97,33 +97,29 @@ export default function Login() {
 
   const handleLogin = async () => {
     setLoading(true);
-
+  
     try {
-      // 백엔드 API 호출
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/login`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/tch/turtle/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: formData.id,
+          id: formData.id,
           password: formData.password
         })
       });
-
+  
       const data = await response.json();
-
-      if (response.ok && data.success) {
-        // 로그인 성공
-        // 토큰이나 사용자 정보 저장
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('userId', data.userId);
-        
+  
+      if (data.status === 'success') {
+        localStorage.setItem('teacherId', formData.id);
         alert('로그인 성공!');
-        navigate('/tchmain'); // 선생님 메인으로 이동
-      } else {
-        // 로그인 실패
-        setError(data.message || '아이디 또는 비밀번호가 틀렸어요!');
+        navigate('/tch/welcome');
+      } else if (data.status === 'wrong_password') {
+        setError('비밀번호가 틀렸어요!');
+      } else if (data.status === 'not_found') {
+        setError('존재하지 않는 아이디예요!');
       }
     } catch (err) {
       console.error('API 에러:', err);

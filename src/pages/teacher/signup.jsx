@@ -83,6 +83,8 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  console.log(import.meta.env.VITE_API_URL);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({
@@ -100,36 +102,32 @@ export default function Signup() {
   };
 
   const handleSignup = async () => {
-    // 비밀번호 확인
     if (formData.password !== formData.confirmPassword) {
       setError('비밀번호가 일치하지 않아요!');
       return;
     }
-
+  
     setLoading(true);
-
+  
     try {
-      // 백엔드 API 호출
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/signup`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/tch/turtle/signup`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          username: formData.id,
+          id: formData.id,
           password: formData.password
         })
       });
-
+  
       const data = await response.json();
-
-      if (response.ok && data.success) {
-        // 회원가입 성공
+  
+      if (data.status === 'success') {
         alert('회원가입이 완료되었어요!');
-        navigate('/login'); // 로그인 페이지로 이동
-      } else {
-        // 회원가입 실패
-        setError(data.message || '이미 사용 중인 아이디예요!');
+        navigate('/tch/login');
+      } else if (data.status === 'error') {
+        setError(data.message || '회원가입에 실패했어요!');
       }
     } catch (err) {
       console.error('API 에러:', err);

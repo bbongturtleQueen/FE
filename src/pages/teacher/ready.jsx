@@ -1,8 +1,8 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
+import FillHeartImg from '../../assets/fillheart.png';
 import Button from '../../components/Button';
-import HeartImg from '../../assets/heart.png';
 
 const Container = styled.div`
   width: 1180px;
@@ -17,11 +17,11 @@ const Container = styled.div`
 const HeartWrapper = styled.div`
   display: flex;
   gap: 12px;
-  margin-bottom: 20px;
+  margin-bottom: 0px;
 `;
 
 const Heart = styled.img`
-  width: 270px;
+  width: 80px;
   height: 80px;
   object-fit: contain;
 `;
@@ -33,7 +33,11 @@ const WelcomeText = styled.p`
   margin-bottom: -20px;
 `;
 
-const ThankText = styled.p`
+const Highlight = styled.span`
+  color: #009A73;
+`;
+
+const WaitingText = styled.p`
   font-size: 32px;
   font-weight: bold;
   color: #1d1d1d;
@@ -47,29 +51,30 @@ const ButtonWrapper = styled.div`
 `;
 
 export default function Ready() {
+  const location = useLocation();
   const navigate = useNavigate();
-  const handleProblemClick = () => {
+  const teachername = location.state?.teachername || 'teacher';
+  const handleMakeProblemClick = () => {
     navigate('/tch/makeproblem');
   };
-
-  const handleSetClick = () => {
+  const handleChooseSetClick = () => {
     navigate('/tch/chooseset');
-  };
+  }
 
   return (
     <Container>
       <HeartWrapper>
-        <Heart src={HeartImg} alt="heart" />
+        <Heart src={FillHeartImg} alt="fill heart" />
+        <Heart src={FillHeartImg} alt="fill heart" />
+        <Heart src={FillHeartImg} alt="fill heart" />
       </HeartWrapper>
       <WelcomeText>
-        환영합니다, 학생들의 사칙연산을 위해
+        환영합니다, <Highlight>{teachername}</Highlight> 님
       </WelcomeText>
-      <ThankText>
-        문제를 만들어 새로운 세트를 생성하세요!
-      </ThankText>
+      <WaitingText>문제를 생성하거나 만든 세트를 고를 수 있어요!</WaitingText>
       <ButtonWrapper>
-        <Button onClick={handleProblemClick}>문제 만들기</Button>
-        <Button onClick={handleSetClick}>세트 고르기</Button>
+        <Button onClick={handleMakeProblemClick}>문제 만들기</Button>
+        <Button onClick={handleChooseSetClick}>세트 고르기</Button>
       </ButtonWrapper>
     </Container>
   );
