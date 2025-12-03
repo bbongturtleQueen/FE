@@ -33,6 +33,7 @@ const Input = styled.input`
   width: 400px;
   padding: 16px 20px;
   border: 1px solid #B4B4B4;
+  background-color: #ffffff;
   border-radius: 10px;
   font-size: 18px;
   margin-bottom: 16px;
@@ -115,7 +116,7 @@ export default function Login() {
       if (data.status === 'success') {
         localStorage.setItem('teacherId', formData.id);
         alert('로그인 성공!');
-        navigate('/tch/welcome');
+        navigate('/tch/ready');
       } else if (data.status === 'wrong_password') {
         setError('비밀번호가 틀렸어요!');
       } else if (data.status === 'not_found') {
