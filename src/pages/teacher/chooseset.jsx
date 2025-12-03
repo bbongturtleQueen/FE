@@ -1,119 +1,139 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
-import Turtle from '../../assets/turtle.png';
+import TurtleIcon from '../../assets/turtle.png';
 
 const Container = styled.div`
-  width: 1180px;
-  height: 730px;
+  width: 1040px;
+  height: 630px;
   display: flex;
   flex-direction: column;
+  padding: 50px 70px 50px 70px;
   background-color: #E3FFE9;
+  position: relative;
+  overflow: hidden;
 `;
 
-const Title = styled.h2`
-  font-size: 28px;
+const Title = styled.p`
+  font-size: 30px;
   font-weight: bold;
-  color: #000000;
+  color:rgb(0, 0, 0);
   margin-bottom: 40px;
 `;
 
-const SetGrid = styled.div`
+const GameGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 40px;
+  grid-template-columns: 486px 486px;
+  gap: 60px;
+  width: 100%;
 `;
 
-const SetCard = styled.div`
+const GameCard = styled.div`
   display: flex;
+  width: 100%;
+  height: 187px;
+  justify-content: center;
   align-items: center;
-  padding: 30px;
-  background-color: #FFFFFF;
-  border: 2px solid #D1D5DB;
+  align-self: stretch;
+  background-color:rgb(236, 255, 239);
+  border: 2px solid #B4B4B4;
   border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s ease;
 
   &:hover {
     transform: translateY(-4px);
+    background-color: transparent;
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
   }
 `;
 
-const SetIcon = styled.img`
-  width: 100px;
-  height: 100px;
-  margin-right: 24px;
+const GameIcon = styled.div`
+  width: 143px;
+  height: 137px;
+  margin-right: 40px;
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
 `;
 
-const SetInfo = styled.div`
-  flex: 1;
+const GameInfo = styled.div`
+  display: flex;
+  flex-direction: column;
 `;
 
-const SetName = styled.h3`
+const GameTitle = styled.h3`
   font-size: 24px;
   font-weight: bold;
-  color: #000000;
-  margin-bottom: 8px;
+  color: #1d1d1d;
+  margin-bottom: 0px;
 `;
 
-const SetDescription = styled.p`
-  font-size: 16px;
+const GameDescription = styled.p`
+  font-size: 18px;
   color: #858585;
   line-height: 1.5;
+  white-space: pre-line;
 `;
 
-export default function ChooseSet() {
-  const [sets, setSets] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadSets();
-  }, []);
-
-  const loadSets = async () => {
-    const teacherId = localStorage.getItem('teacherId');
-    
-    try {
-      const response = await fetch(
-        `${import.meta.env.VITE_API_URL}/ppang/tch/chooseset?teacher_id=${teacherId}`
-      );
-      
-      const data = await response.json();
-      
-      if (data.status === 'success') {
-        setSets(data.sets);
-      }
-    } catch (err) {
-      console.error('API 에러:', err);
-    } finally {
-      setLoading(false);
+export default function StdMain() {
+  const navigate = useNavigate();
+  const games = [
+    {
+      id: 'turtle1',
+      icon: TurtleIcon,
+      title: '1학년 1반 수학 대결',
+      description: '가장 많이 맞춘 친구!!!! 매점',
+      route: '/tch/entercode'
+    },
+    {
+      id: 'turtle2',
+      icon: TurtleIcon,
+      title: '1학년 2반 수학 대결',
+      description: '가장 많이 맞춘 친구!!!! 매점',
+      route: '/tch/entercode'
+    },
+    {
+      id: 'turtle3',
+      icon: TurtleIcon,
+      title: '1학년 3반 수학 대결',
+      description: '가장 많이 맞춘 친구!!!! 매점',
+      route: '/tch/entercode'
+    },
+    {
+      id: 'turtle4',
+      icon: TurtleIcon,
+      title: '1학년 4반 수학 대결',
+      description: '가장 많이 맞춘 친구!!!! 매점',
+      route: '/tch/entercode'
     }
-  };
 
-  const handleSetClick = (setId) => {
-    // 세트 선택하면 게임 시작
-    navigate(`/tch/entercode?set_id=${setId}`);
+  ];
+  const handleGameClick = (game) => {
+    navigate(game.route);
   };
 
   return (
     <Container>
+      
       <Title>아이들에게 공유할 세트를 하나 골라요</Title>
       
-      {loading ? (
-        <p>로딩 중...</p>
-      ) : (
-        <SetGrid>
-          {sets.map((set) => (
-            <SetCard key={set.set_id} onClick={() => handleSetClick(set.set_id)}>
-              <SetIcon src={Turtle} alt="turtle" />
-              <SetInfo>
-                <SetName>{set.set_name}</SetName>
-                <SetDescription>{set.description}</SetDescription>
-              </SetInfo>
-            </SetCard>
-          ))}
-        </SetGrid>
-      )}
+      <GameGrid>
+        {games.map((game) => (
+          <GameCard key={game.id} onClick={() => handleGameClick(game)}>
+            <GameIcon>
+              {game.icon && <img src={game.icon} alt={game.title} />}
+            </GameIcon>
+            <GameInfo>
+              <GameTitle>{game.title}</GameTitle>
+              <GameDescription>{game.description}</GameDescription>
+            </GameInfo>
+          </GameCard>
+        ))}
+      </GameGrid>
     </Container>
   );
 }
