@@ -26,6 +26,29 @@ const blink = keyframes`
   50% { opacity: 0; }
 `;
 
+const ModalOverlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  
+  div {
+      padding: 30px 50px;
+      background: white;
+      border-radius: 15px;
+      font-size: 40px;
+      font-weight: bold;
+      color: ${props => props.$isError ? '#EF4444' : '#009A73'};
+      cursor: pointer;
+  }
+`;
+
 const Container = styled.div`
   width: 1180px;
   height: 730px;
@@ -118,6 +141,7 @@ const TurtleImage = styled.img`
   `}
 `;
 
+
 export default function TurtleGame() {
   const navigate = useNavigate();
   const [lives, setLives] = useState(TOTAL_LIVES);
@@ -130,11 +154,19 @@ export default function TurtleGame() {
   
   const [isModalOpen, setIsModalOpen] = useState(true); 
   const [message, setMessage] = useState('START!');
+  const [isErrorModal, setIsErrorModal] = useState(false);
   
   const blinkingSpot = useRef(null); 
   const allSpots = Array.from({ length: NUM_SPOTS }, (_, i) => i); 
 
-  const startNewStage = useCallback(() => {
+  const generateNextPattern = useCallback(() => {
+    const newPattern = [...pattern];
+    newPattern.push(Math.floor(Math.random() * NUM_SPOTS)); 
+    setPattern(newPattern);
+    return newPattern;
+  }, [pattern]);
+
+  const startNewStage = useCallback((currentPattern = pattern) => {
     if (lives === 0) {
       setGameState('GAME_OVER');
       return;
@@ -144,15 +176,20 @@ export default function TurtleGame() {
     setPlayerSequence([]);
     setMessage('');
     setIsModalOpen(false);
+    setIsErrorModal(false);
 
-    const newPattern = [];
-    for (let i = 0; i < stage; i++) {
-      newPattern.push(Math.floor(Math.random() * NUM_SPOTS));
+    let patternToShow = currentPattern;
+    if (currentPattern.length < stage) {
+        patternToShow = generateNextPattern(); 
     }
-    setPattern(newPattern);
+    
+    setTimeout(() => showPattern(patternToShow), 1000); 
+  }, [lives, stage, pattern, generateNextPattern]);
+  useEffect(() => {
+    if (stage === 1 && pattern.length === 0 && gameState === 'IDLE') {
+    }
+  }, [stage, pattern.length, gameState]);
 
-    setTimeout(() => showPattern(newPattern), 1000); 
-  }, [lives, stage]);
 
   const showPattern = (currentPattern) => {
     let i = 0;
@@ -164,6 +201,7 @@ export default function TurtleGame() {
         setGameState('WAITING_INPUT');
         setMessage('PUSH!');
         setIsModalOpen(true);
+        setIsErrorModal(false);
         return;
       }
       
@@ -182,33 +220,34 @@ export default function TurtleGame() {
     if (gameState !== 'WAITING_INPUT' || isModalOpen) return;
 
     const newSequence = [...playerSequence, clickedIndex];
-    setPlayerSequence(newSequence);
-
     const currentStep = newSequence.length - 1;
-    if (newSequence[currentStep] !== pattern[currentStep]) {
+
+    if (clickedIndex !== pattern[currentStep]) {
       setLives(prev => Math.max(0, prev - 1));
       setMessage('틀렸어요!');
+      setIsErrorModal(true);
       setIsModalOpen(true);
       setGameState('IDLE'); 
       
       if (lives - 1 > 0) {
           setTimeout(() => {
-              setIsModalOpen(false);
-              startNewStage(); 
+              startNewStage(pattern); 
           }, 1500);
       }
+      setPlayerSequence([]);
       return;
     }
+    setPlayerSequence(newSequence);
 
     if (newSequence.length === pattern.length) {
       setScore(prev => prev + 100);
       setStage(prev => prev + 1);
       setMessage('성공!');
+      setIsErrorModal(false);
       setIsModalOpen(true);
       setGameState('IDLE'); 
       
       setTimeout(() => {
-        setIsModalOpen(false);
         startNewStage(); 
       }, 1500);
     }
@@ -218,6 +257,7 @@ export default function TurtleGame() {
     if (lives === 0 && gameState !== 'GAME_OVER') {
       setGameState('GAME_OVER');
       setMessage(`GAME OVER`);
+      setIsErrorModal(false);
       setIsModalOpen(true);
     }
   }, [lives, gameState]);
@@ -227,9 +267,9 @@ export default function TurtleGame() {
           navigate('/'); 
           return;
       }
-      if (isModalOpen && gameState === 'IDLE') {
+      if (isModalOpen && gameState === 'IDLE' && message === 'START!') {
           setIsModalOpen(false);
-          startNewStage(); 
+          startNewStage(generateNextPattern()); 
       }
   };
 
@@ -284,7 +324,7 @@ export default function TurtleGame() {
       </GameSpotContainer>
 
       {isModalOpen && gameState !== 'GAME_OVER' && (
-        <ModalOverlay onClick={handleModalClick}>
+        <ModalOverlay onClick={handleModalClick} $isError={isErrorModal}>
           <div onClick={(e) => e.stopPropagation()}>
             {message}
           </div>

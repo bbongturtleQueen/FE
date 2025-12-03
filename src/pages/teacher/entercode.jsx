@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 
@@ -82,15 +82,14 @@ const StudentCard = styled.div`
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 `;
 
+const WEBSOCKET_HOST = "ws://localhost:8000";
 
 export default function EnterCode() {
     const navigate = useNavigate();
     const [inviteCode, setInviteCode] = useState('------'); 
-    const [students, setStudents] = useState([ 
-        "1402 권길현", "1410 양선미", "1411 윤미수", "1414 이은채",
-        "1414 이은채", "1414 이은채", "1414 이은채", "1414 이은채",
-        "1414 이은채", "1414 이은채", "1414 이은채", "1414 이은채",
-    ]);
+    const [students, setStudents] = useState([]); 
+    
+    const wsRef = useRef(null); 
 
     const generateRandomCode = () => {
         let code = '';
@@ -99,12 +98,75 @@ export default function EnterCode() {
         }
         return code;
     };
+    
     useEffect(() => {
-        setInviteCode(generateRandomCode());
+        const generatedCode = generateRandomCode();
+        setInviteCode(generatedCode);
     }, []); 
 
+    useEffect(() => {
+        if (inviteCode === '------') return;
+
+        const storedTeacherId = localStorage.getItem('teacherId'); 
+        
+        if (!storedTeacherId) {
+            console.error("Teacher ID not found in localStorage. Please log in.");
+            return;
+        }
+        
+        const ws = new WebSocket(`${WEBSOCKET_HOST}/ws/classroom-${inviteCode}`);
+        wsRef.current = ws; 
+        
+        let teacherId = storedTeacherId; 
+
+        ws.onopen = () => {
+            ws.send(JSON.stringify({
+                userId: teacherId,
+                type: "teacher_join"
+            }));
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.type === "join" || data.type === "leave") {
+                setStudents(data.list); 
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error("WebSocket Error:", error);
+        };
+
+        ws.onclose = () => {
+            console.log(`WebSocket Disconnected from classroom: ${inviteCode}`);
+        };
+
+        return () => {
+            if (ws) {
+                ws.close();
+            }
+        };
+    }, [inviteCode]); 
+
     const handleStartGame = () => {
-        navigate('/tch/game');
+        if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+            
+            wsRef.current.send(JSON.stringify({
+                type: "delete_code", 
+                code: inviteCode,
+            }));
+            
+            wsRef.current.send(JSON.stringify({
+                type: "start_game", 
+            }));
+            
+            navigate('/tch/game');
+
+        } else {
+            console.error("WebSocket is not connected. Cannot start game.");
+            navigate('/tch/game');
+        }
     };
 
     return (
@@ -118,11 +180,17 @@ export default function EnterCode() {
             </ContentBox>
             
             <StudentGrid>
-                {students.map((student, index) => (
-                    <StudentCard key={index}>
-                        {student}
-                    </StudentCard>
-                ))}
+                {students.length > 0 ? (
+                    students.map((student, index) => (
+                        <StudentCard key={index}>
+                            {student.name || student.userId || student} 
+                        </StudentCard>
+                    ))
+                ) : (
+                    <p style={{ gridColumn: '1 / span 4', textAlign: 'center', color: '#888' }}>
+                        학생들의 접속을 기다리고 있습니다...
+                    </p>
+                )}
             </StudentGrid>
         </Container>
     );

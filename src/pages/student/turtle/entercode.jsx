@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import ContentModal from '../../../components/contentmodal.jsx';
+
+const WEBSOCKET_HOST = "ws://localhost:8000";
 
 const Container = styled.div`
   width: 1180px;
@@ -52,8 +54,7 @@ export default function TurtleEnterCode() {
   const navigate = useNavigate();
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState('');
-
-  const validCodes = ['090318', '123456'];
+  const wsRef = useRef(null); 
 
   const handleCodeChange = (index, value) => {
     if (value.length <= 1 && /^[0-9]*$/.test(value)) {
@@ -76,14 +77,23 @@ export default function TurtleEnterCode() {
 
   const handleSubmit = () => {
     const fullCode = code.join('');
-    
-    if (validCodes.includes(fullCode)) {
-      navigate('/std/turtle/nickname');
-    } else {
+    setError('');
+
+    const ws = new WebSocket(`${WEBSOCKET_HOST}/ws/classroom-${fullCode}`);
+    wsRef.current = ws;
+
+    ws.onopen = () => {
+      console.log(`Successfully connected to classroom: ${fullCode}`);
+      navigate('/std/turtle/nickname', { state: { inviteCode: fullCode } }); 
+      ws.close(); 
+    };
+
+    ws.onerror = () => {
+      ws.close();
       setError('없는 클래스예요! 코드를 다시 적어볼까요?');
       setCode(['', '', '', '', '', '']);
       document.getElementById('code-0').focus();
-    }
+    };
   };
 
   const isCodeComplete = code.every(digit => digit !== '');
