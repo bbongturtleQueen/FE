@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import ContentModal from '../../../components/contentmodal.jsx';
 
@@ -40,22 +40,47 @@ const NicknameInput = styled.input`
 
 export default function TurtleNickname() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [nickname, setNickname] = useState('');
 
-  const handleSubmit = () => {
-    // 닉네임을 다음 페이지로 전달
-    navigate('/std/turtle/wait', { state: { nickname } });
-  };
+  const inviteCode = location.state?.inviteCode;
 
-  const isNicknameValid = nickname.trim() !== '';
+  const handleSubmit = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/kid/enter-code`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: inviteCode,
+          id: nickname    // ⭐ 실제 join 처리
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.status === 'valid') {
+        navigate('/std/turtle/wait', {
+          state: {
+            nickname,
+            inviteCode
+          }
+        });
+      } else {
+        alert("닉네임 저장 실패!");
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("서버 오류!");
+    }
+  };
 
   return (
     <Container>
       <ContentModal
         buttonText="닉네임 저장하기"
         onSubmit={handleSubmit}
-        onClose={() => {}}
-        disabled={!isNicknameValid}
+        disabled={nickname.trim() === ""}
       >
         <Title>게임에서 사용할 닉네임을 적어요!</Title>
         <NicknameInput
