@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import styled, { keyframes, css } from 'styled-components';
+import styled, { css } from 'styled-components';
 import GameOver from '../../../components/gameover.jsx'; 
 
 import HeartImg from '../../../assets/fillheart.png';
@@ -20,11 +20,6 @@ const MEMORY_COLORS = {
   GAME_OVER_HOVER: '#FDC200',
   SCORE: '#F79800',
 };
-
-const blink = keyframes`
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
-`;
 
 const ModalOverlay = styled.div`
   position: absolute;
@@ -97,22 +92,27 @@ const GameSpotContainer = styled.div`
 const GameSpotRow = styled.div`
   display: flex;
   justify-content: center;
+  gap: 40px;
   ${props => props.$isTopRow && css`
-    margin-bottom: -50px; 
+    margin-bottom: -30px;
   `}
 `;
 
-const ANSWER_BUTTON_WIDTH = 220; 
+const ANSWER_BUTTON_WIDTH = 220;
 
 const GameSpot = styled.div`
   width: ${ANSWER_BUTTON_WIDTH}px;
   height: 200px;
-  background-color: transparent; 
+  background-color: transparent;
   position: relative;
   cursor: pointer;
-  
+
   ${props => props.$isTopRow && css`
-    margin: 0 100px; 
+    margin: 0 80px;
+  `}
+
+  ${props => props.$isBottomEdge && css`
+    margin: 0 100px;
   `}
 
   &:hover {
@@ -128,16 +128,12 @@ const TurtleImage = styled.img`
   width: 150px;
   height: 150px;
   object-fit: contain;
-  opacity: 0; 
+  opacity: 0;
   transition: opacity 0.1s;
-  pointer-events: none; 
-  
+  pointer-events: none;
+
   ${props => props.$isVisible && css`
     opacity: 1;
-  `}
-  
-  ${props => props.$isBlinking && css`
-    animation: ${blink} 0.2s steps(1) 3 alternate;
   `}
 `;
 
@@ -152,16 +148,16 @@ export default function TurtleGame() {
   const [playerSequence, setPlayerSequence] = useState([]);
   const [gameState, setGameState] = useState('IDLE'); 
   
-  const [isModalOpen, setIsModalOpen] = useState(true); 
-  const [message, setMessage] = useState('START!');
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [message, setMessage] = useState('');
   const [isErrorModal, setIsErrorModal] = useState(false);
-  
-  const blinkingSpot = useRef(null); 
-  const allSpots = Array.from({ length: NUM_SPOTS }, (_, i) => i); 
+  const [blinkingSpot, setBlinkingSpot] = useState(null);
+
+  const allSpots = Array.from({ length: NUM_SPOTS }, (_, i) => i);
 
   const generateNextPattern = useCallback(() => {
     const newPattern = [...pattern];
-    newPattern.push(Math.floor(Math.random() * NUM_SPOTS)); 
+    newPattern.push(Math.floor(Math.random() * NUM_SPOTS));
     setPattern(newPattern);
     return newPattern;
   }, [pattern]);
@@ -183,37 +179,36 @@ export default function TurtleGame() {
         patternToShow = generateNextPattern(); 
     }
     
-    setTimeout(() => showPattern(patternToShow), 1000); 
+    setTimeout(() => showPattern(patternToShow), 1000);
   }, [lives, stage, pattern, generateNextPattern]);
-  useEffect(() => {
-    if (stage === 1 && pattern.length === 0 && gameState === 'IDLE') {
-    }
-  }, [stage, pattern.length, gameState]);
-
 
   const showPattern = (currentPattern) => {
     let i = 0;
-    
+
     const interval = setInterval(() => {
       if (i >= currentPattern.length) {
         clearInterval(interval);
-        blinkingSpot.current = null;
-        setGameState('WAITING_INPUT');
+        setBlinkingSpot(null);
         setMessage('PUSH!');
         setIsModalOpen(true);
         setIsErrorModal(false);
+
+        setTimeout(() => {
+          setIsModalOpen(false);
+          setGameState('WAITING_INPUT');
+        }, 500);
         return;
       }
-      
+
       const spotIndex = currentPattern[i];
-      blinkingSpot.current = spotIndex; 
-      
+      setBlinkingSpot(spotIndex);
+
       setTimeout(() => {
-        blinkingSpot.current = null; 
-      }, BLINK_DURATION); 
+        setBlinkingSpot(null);
+      }, BLINK_DURATION);
 
       i++;
-    }, INTERVAL_TIME); 
+    }, INTERVAL_TIME);
   };
 
   const handleSpotClick = useCallback((clickedIndex) => {
@@ -262,14 +257,18 @@ export default function TurtleGame() {
     }
   }, [lives, gameState]);
 
+  useEffect(() => {
+    const newPattern = [Math.floor(Math.random() * NUM_SPOTS)];
+    setPattern(newPattern);
+    setTimeout(() => {
+      setGameState('SHOWING_PATTERN');
+      showPattern(newPattern);
+    }, 1000);
+  }, []);
+
   const handleModalClick = () => {
       if (gameState === 'GAME_OVER') {
-          navigate('/'); 
-          return;
-      }
-      if (isModalOpen && gameState === 'IDLE' && message === 'START!') {
-          setIsModalOpen(false);
-          startNewStage(generateNextPattern()); 
+          navigate('/std/main');
       }
   };
 
@@ -279,10 +278,10 @@ export default function TurtleGame() {
 
   return (
     <Container>
-      
+
       <HeartWrapper>
         {Array.from({ length: TOTAL_LIVES }).map((_, index) => (
-          <Heart 
+          <Heart
             key={index}
             src={index < lives ? HeartImg : EmptyHeartImg}
             alt="Life"
@@ -293,30 +292,29 @@ export default function TurtleGame() {
       <GameSpotContainer>
         <GameSpotRow $isTopRow={true}>
           {topSpots.map((index) => (
-            <GameSpot 
-              key={index} 
+            <GameSpot
+              key={index}
               onClick={() => handleSpotClick(index)}
               $isTopRow={true}
             >
-              <TurtleImage 
+              <TurtleImage
                 src={TurtleImg}
-                $isVisible={pattern.includes(index) || playerSequence.includes(index) || blinkingSpot.current === index}
-                $isBlinking={blinkingSpot.current === index}
+                $isVisible={gameState === 'SHOWING_PATTERN' && blinkingSpot === index}
               />
             </GameSpot>
           ))}
         </GameSpotRow>
-        
+
         <GameSpotRow>
-          {bottomSpots.map((index) => (
-            <GameSpot 
-              key={index} 
+          {bottomSpots.map((index, idx) => (
+            <GameSpot
+              key={index}
               onClick={() => handleSpotClick(index)}
+              $isBottomEdge={idx === 0 || idx === 2}
             >
-              <TurtleImage 
+              <TurtleImage
                 src={TurtleImg}
-                $isVisible={pattern.includes(index) || playerSequence.includes(index) || blinkingSpot.current === index}
-                $isBlinking={blinkingSpot.current === index}
+                $isVisible={gameState === 'SHOWING_PATTERN' && blinkingSpot === index}
               />
             </GameSpot>
           ))}
