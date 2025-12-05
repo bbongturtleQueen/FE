@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import FillHeartImg from '../../assets/fillheart.png';
@@ -53,7 +53,14 @@ const ButtonWrapper = styled.div`
 export default function Ready() {
   const location = useLocation();
   const navigate = useNavigate();
-  const teachername = location.state?.teachername || 'teacher';
+  const [teacherId, setTeacherId] = useState('teacher');
+
+  useEffect(() => {
+    const storedTeacherId = localStorage.getItem('teacherId');
+    if (storedTeacherId) {
+      setTeacherId(storedTeacherId);
+    }
+  }, []);
   const handleMakeProblemClick = () => {
     navigate('/tch/makeproblem');
   };
@@ -69,7 +76,7 @@ export default function Ready() {
         <Heart src={FillHeartImg} alt="fill heart" />
       </HeartWrapper>
       <WelcomeText>
-        환영합니다, <Highlight>{teachername}</Highlight> 님
+        환영합니다, <Highlight>{teacherId}</Highlight> 님
       </WelcomeText>
       <WaitingText>문제를 생성하거나 만든 세트를 고를 수 있어요!</WaitingText>
       <ButtonWrapper>
