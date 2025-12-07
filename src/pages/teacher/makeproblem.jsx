@@ -14,7 +14,7 @@ const Container = styled.div`
 
 // ⭐ 세트 생성 API
 async function createProblemSetAPI(setName, teacherId) {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/tch/create-set`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/set/create`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -29,7 +29,7 @@ async function createProblemSetAPI(setName, teacherId) {
 
 // ⭐ 문제 추가 API
 async function addQuestionAPI(setName, question) {
-    const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/tch/add-question`, {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/set/add-problem`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

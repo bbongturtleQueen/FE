@@ -206,16 +206,16 @@ export default function TurtleGame() {
           return;
         }
 
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/tch/get-questions?set_name=${encodeURIComponent(setName)}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/set/problems/${encodeURIComponent(setName)}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });
 
         const data = await response.json();
 
-        if (data.status === 'success' && data.questions) {
+        if (data.problems && Array.isArray(data.problems)) {
           // API에서 받은 문제를 게임 형식으로 변환
-          const formattedProblems = data.questions.map((q, index) => {
+          const formattedProblems = data.problems.map((q, index) => {
             // question: "3 + 5" 형식을 파싱
             const parts = q.question.split(' ');
             return {
