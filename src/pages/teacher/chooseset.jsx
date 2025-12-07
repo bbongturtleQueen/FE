@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import TurtleIcon from '../../assets/turtle.png';
@@ -79,60 +79,78 @@ const GameDescription = styled.p`
   white-space: pre-line;
 `;
 
-export default function StdMain() {
+export default function ChooseSet() {
   const navigate = useNavigate();
-  const games = [
-    {
-      id: 'turtle1',
-      icon: TurtleIcon,
-      title: '1학년 1반 수학 대결',
-      description: '가장 많이 맞춘 친구!!!! 매점',
-      route: '/tch/entercode'
-    },
-    {
-      id: 'turtle2',
-      icon: TurtleIcon,
-      title: '1학년 2반 수학 대결',
-      description: '가장 많이 맞춘 친구!!!! 매점',
-      route: '/tch/entercode'
-    },
-    {
-      id: 'turtle3',
-      icon: TurtleIcon,
-      title: '1학년 3반 수학 대결',
-      description: '가장 많이 맞춘 친구!!!! 매점',
-      route: '/tch/entercode'
-    },
-    {
-      id: 'turtle4',
-      icon: TurtleIcon,
-      title: '1학년 4반 수학 대결',
-      description: '가장 많이 맞춘 친구!!!! 매점',
-      route: '/tch/entercode'
-    }
+  const [sets, setSets] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  ];
-  const handleGameClick = (game) => {
-    navigate(game.route);
+  // 선생님이 만든 세트 목록 가져오기
+  useEffect(() => {
+    const fetchSets = async () => {
+      try {
+        const teacherId = localStorage.getItem('teacherId');
+
+        if (!teacherId) {
+          console.error('Teacher ID not found');
+          return;
+        }
+
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/tch/get-sets?teacher_id=${teacherId}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success' && data.sets) {
+          setSets(data.sets);
+        } else {
+          console.error('세트 목록 가져오기 실패:', data);
+        }
+      } catch (err) {
+        console.error('세트 목록 API 오류:', err);
+        alert('세트 목록을 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSets();
+  }, []);
+
+  const handleGameClick = (set) => {
+    // 세트를 선택하면 해당 세트 정보를 저장하고 entercode로 이동
+    localStorage.setItem('selectedSetId', set.id);
+    localStorage.setItem('selectedSetName', set.name);
+    navigate('/tch/entercode');
   };
 
   return (
     <Container>
-      
       <Title>아이들에게 공유할 세트를 하나 골라요</Title>
-      
+
       <GameGrid>
-        {games.map((game) => (
-          <GameCard key={game.id} onClick={() => handleGameClick(game)}>
-            <GameIcon>
-              {game.icon && <img src={game.icon} alt={game.title} />}
-            </GameIcon>
-            <GameInfo>
-              <GameTitle>{game.title}</GameTitle>
-              <GameDescription>{game.description}</GameDescription>
-            </GameInfo>
-          </GameCard>
-        ))}
+        {loading ? (
+          <p style={{ gridColumn: '1 / span 2', textAlign: 'center', color: '#888' }}>
+            세트 목록 불러오는 중...
+          </p>
+        ) : sets.length > 0 ? (
+          sets.map((set) => (
+            <GameCard key={set.id} onClick={() => handleGameClick(set)}>
+              <GameIcon>
+                <img src={TurtleIcon} alt={set.name} />
+              </GameIcon>
+              <GameInfo>
+                <GameTitle>{set.name}</GameTitle>
+                <GameDescription>{set.description || '수학 문제 세트'}</GameDescription>
+              </GameInfo>
+            </GameCard>
+          ))
+        ) : (
+          <p style={{ gridColumn: '1 / span 2', textAlign: 'center', color: '#888' }}>
+            아직 만든 문제 세트가 없습니다. 문제를 만들어주세요!
+          </p>
+        )}
       </GameGrid>
     </Container>
   );

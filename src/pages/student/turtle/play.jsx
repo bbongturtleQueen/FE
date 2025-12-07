@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import ResultModal from '../../../components/ResultModal';
 import HeartImg from '../../../assets/fillheart.png';
@@ -159,11 +159,15 @@ const AnswerNumberImg = styled.img`
 
 export default function TurtleGame() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [lives, setLives] = useState(3);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [showResultModal, setShowResultModal] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
+  const [problems, setProblems] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [score, setScore] = useState(0);
   const maxLives = 3;
 
   const numberImages = {
@@ -189,18 +193,55 @@ export default function TurtleGame() {
     return String(num).split('').map(digit => images[digit]);
   };
 
-  const problems = [
-    { id: 1, num1: 2, operator: '×', num2: 4, answer: 8, options: [4, 8, 6, 12, 24] },
-    { id: 2, num1: 3, operator: '+', num2: 5, answer: 8, options: [6, 7, 8, 9, 10] },
-    { id: 3, num1: 10, operator: '-', num2: 3, answer: 7, options: [7, 6, 5, 9, 8] },
-    { id: 4, num1: 6, operator: '×', num2: 3, answer: 18, options: [12, 15, 18, 21, 24] },
-    { id: 5, num1: 9, operator: '+', num2: 7, answer: 16, options: [14, 15, 17, 16, 18] },
-    { id: 6, num1: 20, operator: '-', num2: 8, answer: 12, options: [10, 11, 12, 13, 14] },
-    { id: 7, num1: 5, operator: '/', num2: 5, answer: 1, options: [1, 5, 25, 27, 0] },
-    { id: 8, num1: 12, operator: '+', num2: 8, answer: 20, options: [18, 19, 22, 21, 20] },
-    { id: 9, num1: 15, operator: '-', num2: 6, answer: 9, options: [7, 8, 10, 9, 11] },
-    { id: 10, num1: 4, operator: '×', num2: 7, answer: 28, options: [24, 26, 32, 30, 28] }
-  ];
+  // 문제 데이터 API로 가져오기
+  useEffect(() => {
+    const fetchProblems = async () => {
+      try {
+        const setName = location.state?.setName || localStorage.getItem('selectedSetName');
+
+        if (!setName) {
+          console.error('Set name not found');
+          alert('문제 세트를 찾을 수 없습니다.');
+          navigate('/std/turtle/entercode');
+          return;
+        }
+
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/tch/get-questions?set_name=${encodeURIComponent(setName)}`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success' && data.questions) {
+          // API에서 받은 문제를 게임 형식으로 변환
+          const formattedProblems = data.questions.map((q, index) => {
+            // question: "3 + 5" 형식을 파싱
+            const parts = q.question.split(' ');
+            return {
+              id: index + 1,
+              num1: parseInt(parts[0]),
+              operator: parts[1] === '*' ? '×' : parts[1] === '/' ? '÷' : parts[1],
+              num2: parseInt(parts[2]),
+              answer: parseInt(q.answer),
+              options: q.choices.map(c => parseInt(c))
+            };
+          });
+          setProblems(formattedProblems);
+        } else {
+          console.error('문제 불러오기 실패:', data);
+          alert('문제를 불러오는데 실패했습니다.');
+        }
+      } catch (err) {
+        console.error('문제 API 오류:', err);
+        alert('문제를 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProblems();
+  }, [location, navigate]);
 
   const currentProblem = problems[currentQuestion];
 
@@ -209,6 +250,7 @@ export default function TurtleGame() {
 
     if (answer === currentProblem.answer) {
       setIsCorrect(true);
+      setScore(score + 1); // 정답 시 점수 증가
       setShowResultModal(true);
     } else {
       if (lives > 1) {
@@ -218,7 +260,7 @@ export default function TurtleGame() {
       } else {
         setLives(0);
         setTimeout(() => {
-          navigate('/std/turtle/gameover');
+          navigate('/std/turtle/gameover', { state: { score } });
         }, 1000);
       }
     }
@@ -226,19 +268,58 @@ export default function TurtleGame() {
 
   const handleNextQuestion = () => {
     setShowResultModal(false);
-    
+
     if (lives === 0) {
-      navigate('/std/turtle/gameover');
+      navigate('/std/turtle/gameover', { state: { score } });
       return;
     }
-  
+
     if (currentQuestion < problems.length - 1) {
       setCurrentQuestion(currentQuestion + 1);
       setSelectedAnswer(null);
     } else {
-      navigate('/std/turtle/rank');
+      // 모든 문제 완료 시 점수와 함께 랭킹으로 이동
+      navigate('/std/turtle/rank', { state: { score } });
     }
   };
+
+  // 로딩 중
+  if (loading) {
+    return (
+      <Container>
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          fontSize: '24px',
+          color: '#56CF6E',
+          fontWeight: 'bold'
+        }}>
+          문제 불러오는 중...
+        </div>
+      </Container>
+    );
+  }
+
+  // 문제가 없는 경우
+  if (!currentProblem) {
+    return (
+      <Container>
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          fontSize: '24px',
+          color: '#EF4444',
+          fontWeight: 'bold'
+        }}>
+          문제를 불러올 수 없습니다.
+        </div>
+      </Container>
+    );
+  }
 
   return (
     <Container>
