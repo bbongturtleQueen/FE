@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 
 const Container = styled.div`
@@ -111,15 +111,40 @@ const Score = styled.span`
 `;
 
 export default function Rank() {
-  const rankings = [
-    { rank: 1, classNum: 1414, name: '이은채', score: 10 },
-    { rank: 2, classNum: 1411, name: '윤미수', score: 9 },
-    { rank: 3, classNum: 1305, name: '김지은', score: 9 },
-    { rank: 4, classNum: 1314, name: '임소리', score: 8 },
-    { rank: 5, classNum: 1410, name: '양선미', score: 7 },
-    { rank: 6, classNum: 1302, name: '김주연', score: 6 }
-  ];
-  const currentUserNickname = '윤미수'; 
+  const [rankings, setRankings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const currentUserNickname = localStorage.getItem('studentId') || '';
+
+  // 랭킹 조회 API 호출
+  useEffect(() => {
+    const fetchRankings = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/kid/ranking`, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        const data = await response.json();
+
+        if (data.rank && Array.isArray(data.rank)) {
+          // rank 배열을 순위 형태로 변환
+          const formattedRankings = data.rank.map((item, index) => ({
+            rank: index + 1,
+            name: item.id,
+            score: item.score
+          }));
+          setRankings(formattedRankings);
+        }
+      } catch (err) {
+        console.error('랭킹 조회 API 오류:', err);
+        alert('랭킹을 불러오는데 실패했습니다.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRankings();
+  }, []); 
 
   const handleClose = () => {
     window.location.href = '/std/main';
@@ -130,23 +155,29 @@ export default function Rank() {
       <ModalBox>
         <CloseButton onClick={handleClose}>×</CloseButton>
         <Title>🏆 거북이 등딱지 순위</Title>
-        
-        <RankingList>
-          {rankings.map((player) => {
-            const isMe = player.name === currentUserNickname;
 
-            return (
-              <RankingItem key={player.rank} isMe={isMe}>
-                <RankBadge rank={player.rank}>{player.rank}위</RankBadge>
-                <PlayerInfo>
-                  <PlayerName isMe={isMe}>
-                    {player.classNum} {player.name}
-                  </PlayerName>
-                  <Score isMe={isMe}>{player.score}/10</Score>
-                </PlayerInfo>
-              </RankingItem>
-            );
-          })}
+        <RankingList>
+          {loading ? (
+            <p style={{ textAlign: 'center', color: '#888' }}>랭킹 불러오는 중...</p>
+          ) : rankings.length > 0 ? (
+            rankings.map((player) => {
+              const isMe = player.name === currentUserNickname;
+
+              return (
+                <RankingItem key={player.rank} isMe={isMe}>
+                  <RankBadge rank={player.rank}>{player.rank}위</RankBadge>
+                  <PlayerInfo>
+                    <PlayerName isMe={isMe}>
+                      {player.name}
+                    </PlayerName>
+                    <Score isMe={isMe}>{player.score}점</Score>
+                  </PlayerInfo>
+                </RankingItem>
+              );
+            })
+          ) : (
+            <p style={{ textAlign: 'center', color: '#888' }}>아직 랭킹 정보가 없습니다.</p>
+          )}
         </RankingList>
       </ModalBox>
     </Container>

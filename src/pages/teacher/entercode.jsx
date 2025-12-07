@@ -86,22 +86,46 @@ const WEBSOCKET_HOST = "ws://localhost:8000";
 
 export default function EnterCode() {
     const navigate = useNavigate();
-    const [inviteCode, setInviteCode] = useState('------'); 
-    const [students, setStudents] = useState([]); 
-    
-    const wsRef = useRef(null); 
+    const [inviteCode, setInviteCode] = useState('------');
+    const [students, setStudents] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    const generateRandomCode = () => {
-        let code = '';
-        for (let i = 0; i < 6; i++) {
-            code += Math.floor(Math.random() * 10).toString();
-        }
-        return code;
-    };
-    
+    const wsRef = useRef(null);
+
+    // 방 생성 API 호출
     useEffect(() => {
-        const generatedCode = generateRandomCode();
-        setInviteCode(generatedCode);
+        const createRoom = async () => {
+            try {
+                const teacherId = localStorage.getItem('teacherId');
+
+                if (!teacherId) {
+                    console.error("Teacher ID not found in localStorage.");
+                    return;
+                }
+
+                const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/tch/create-room`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: teacherId })
+                });
+
+                const data = await response.json();
+
+                if (data.status === 'success' && data.code) {
+                    setInviteCode(data.code);
+                } else {
+                    console.error('방 생성 실패:', data);
+                    alert('방 생성에 실패했습니다.');
+                }
+            } catch (err) {
+                console.error('방 생성 API 오류:', err);
+                alert('서버 연결에 실패했습니다.');
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        createRoom();
     }, []); 
 
     useEffect(() => {

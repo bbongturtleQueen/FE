@@ -212,32 +212,18 @@ export default function ProblemModal({ onClose, onSubmit }) {
     );
   };
 
-  const handleNext = async () => {
-    const teacherId = localStorage.getItem('teacherId');
-    
-    try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/tch/chooseset`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          teacher_id: teacherId,
-          set_name: setName,
-          description: "수학 싫어! 어린이들에게, 재미있게 공부해요!",
-          problems: problems
-        })
-      });
-  
-      const data = await response.json();
-      
-      if (data.status === 'success') {
-        alert('문제 세트가 저장되었어요!');
-        navigate('/tch/chooseset');
-      }
-    } catch (err) {
-      console.error('API 에러:', err);
-    }
+  const handleNext = () => {
+    // onSubmit 콜백을 통해 부모 컴포넌트에서 API 호출 처리
+    const formattedProblems = problems.map(p => ({
+      question: `${p.num1} ${p.operator} ${p.num2}`,
+      answer: p.answer,
+      choices: [...p.options, p.answer] // 보기에 정답 포함
+    }));
+
+    onSubmit({
+      setName,
+      problems: formattedProblems
+    });
   };
 
   return (
