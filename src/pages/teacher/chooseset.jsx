@@ -95,7 +95,7 @@ export default function ChooseSet() {
           return;
         }
 
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/tch/get-sets?teacher_id=${teacherId}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/ppang/set/list/${teacherId}`, {
           method: 'GET',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -142,7 +142,7 @@ export default function ChooseSet() {
               </GameIcon>
               <GameInfo>
                 <GameTitle>{set.name}</GameTitle>
-                <GameDescription>{set.description || '수학 문제 세트'}</GameDescription>
+                <GameDescription>{set.description || '문제 세트'}</GameDescription>
               </GameInfo>
             </GameCard>
           ))

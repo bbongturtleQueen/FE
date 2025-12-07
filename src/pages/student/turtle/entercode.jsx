@@ -84,7 +84,7 @@ export default function TurtleEnterCode() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           code: fullCode,  
-          id: ""  // ⭐ 첫 번째 호출에서는 id 절대 넣지 않기!
+          id: ""
         })
       });
 
