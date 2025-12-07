@@ -80,7 +80,7 @@ export default function MakeProblem() {
             alert("문제 세트 저장 완료!");
 
             // 3️⃣ 완료 후 choose set 으로 이동
-            window.location.href = "/teacher/chooseset";
+            window.location.href = "/tch/chooseset";
 
         } catch (err) {
             console.error(err);
