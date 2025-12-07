@@ -53,6 +53,7 @@ const SetNameInput = styled.input`
   width: 760px;
   padding: 14px 20px;
   border: 2px solid #D1D5DB;
+  background-color: #FFFFFF;
   border-radius: 12px;
   font-size: 16px;
   margin-bottom: 30px;
@@ -114,6 +115,7 @@ const InputBox = styled.input`
   border-radius: 8px;
   font-size: 16px;
   text-align: center;
+  background-color: #FFFFFF;
 
   &:focus {
     outline: none;
