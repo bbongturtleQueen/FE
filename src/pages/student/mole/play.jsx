@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import GameOver from '../../../components/gameover.jsx';
+import { listenButton, stopButton } from '../../../button.jsx';
 
 import HeartImg from '../../../assets/fillheart.png';
 import EmptyHeartImg from '../../../assets/emptyheart.png';
@@ -145,7 +146,6 @@ export default function MolePlay() {
 
     // 💡 NEW: 두더지가 현재 올라와 있는 위치를 최신 상태로 추적하는 Ref
     const activeMoleRef = useRef(null);
-
     // lives/activeMole이 변경될 때마다 Ref 업데이트
     useEffect(() => {
         livesRef.current = lives;
@@ -295,6 +295,15 @@ export default function MolePlay() {
         navigate('/std/main');
     };
 
+    // 라즈베리파이 버튼 입력 처리
+    useEffect(() => {
+        listenButton((choice) => {
+            console.log("두더지 버튼 선택:", choice);
+            handleMoleClick(choice);
+        });
+        return () => stopButton();
+    }, [handleMoleClick]);
+
     return (
         <Container>
             <HeartWrapper>
@@ -306,7 +315,6 @@ export default function MolePlay() {
                     />
                 ))}
             </HeartWrapper>
-
             {showSlowMessage && (
                 <MessageOverlay $isShowing={showSlowMessage}>
                     좀 더 빠르게!

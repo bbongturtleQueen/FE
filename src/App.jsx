@@ -1,5 +1,9 @@
-import React from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import React, { useEffect, useRef } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { io } from "socket.io-client";
+
+// Ubuntu 서버 IP
+const socket = io("http://10.150.1.242:5000");
 // std + tch
 import Start from './pages/start.jsx';
 
@@ -33,10 +37,45 @@ import MakeProblem from './pages/teacher/makeproblem.jsx';
 import ChooseSet from './pages/teacher/chooseset.jsx';
 import EnterCode from './pages/teacher/entercode.jsx';
 
+// 기본 배경음악 컴포넌트
+function BackgroundMusic() {
+  const location = useLocation();
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    const path = location.pathname;
+
+    // student 페이지이고, 특정 play 페이지가 아닐 때만 재생
+    const isStudentPage = path.startsWith('/std');
+    const isPlayPage = path === '/std/mole/play' ||
+                       path === '/std/music/play' ||
+                       path === '/std/memory/play' ||
+                       path === '/std/turtle/play';
+
+    if (audioRef.current) {
+      if (isStudentPage && !isPlayPage) {
+        audioRef.current.play().catch(err => console.log('Background music play failed:', err));
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [location]);
+
+  return (
+    <audio
+      ref={audioRef}
+      loop
+      preload="auto"
+    >
+      <source src="/default.mp3" type="audio/mpeg" />
+    </audio>
+  );
+}
 
 export default function App() {
   return (
     <BrowserRouter>
+      <BackgroundMusic />
       <Routes>
         <Route path="/" element={<Start />} />
 

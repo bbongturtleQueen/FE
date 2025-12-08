@@ -104,8 +104,20 @@ const ProblemRow = styled.div`
 const ProblemNumber = styled.div`
   font-size: 16px;
   font-weight: bold;
-  color: #22C55E;
   min-width: 35px;
+  color: #009A73;
+  &:-webkit-autofill,
+  &:-webkit-autofill:hover,
+  &:-webkit-autofill:focus,
+  &:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+    transition: background-color 5000s ease-in-out 0s;
+    -webkit-text-fill-color: #009A73 !important;
+  }
+  &:focus {
+    outline: none;
+    border-color: #22C55E;
+    color: #009A73;
 `;
 
 const InputBox = styled.input`

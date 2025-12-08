@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
-import GameOver from '../../../components/gameover.jsx'; 
+import GameOver from '../../../components/gameover.jsx';
+import { listenButton, stopButton } from '../../../button.jsx';
 
 import HeartImg from '../../../assets/fillheart.png';
 import EmptyHeartImg from '../../../assets/emptyheart.png';
@@ -128,6 +129,40 @@ const Heart = styled.img`
   height: 42px;
 `;
 
+const ToggleSwitch = styled.button`
+  position: absolute;
+  top: 20px;
+  right: 30px;
+  width: 70px;
+  height: 34px;
+  border-radius: 17px;
+  background-color: ${props => props.$isOn ? '#defff8' : '#fbfffb'};
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  z-index: 100;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    background-color: ${props => props.$isOn ? '#f6fff3' : '#fbfffb'};
+  }
+`;
+
+const ToggleKnob = styled.div`
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background-color: white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+  transform: translateX(${props => props.$isOn ? '34px' : '0px'});
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+`;
+
 const ClickTargetWrapper = styled.div`
   position: absolute;
   bottom: 50px;
@@ -154,17 +189,34 @@ export default function MusicPlay() {
   const navigate = useNavigate();
   const [lives, setLives] = useState(TOTAL_LIVES);
   const [score, setScore] = useState(0);
-  const [notes, setNotes] = useState([]); 
-  const [judgement, setJudgement] = useState(null); 
+  const [notes, setNotes] = useState([]);
+  const [judgement, setJudgement] = useState(null);
+  const [isMusicOn, setIsMusicOn] = useState(true);
 
   const nextNoteId = useRef(0);
   const gameLoopRef = useRef(null);
-  const pendingMisses = useRef(0); 
+  const pendingMisses = useRef(0);
+  const audioRef = useRef(null); 
 
   const handleJudgement = (type) => {
     setJudgement(type);
-    setTimeout(() => setJudgement(null), 800); 
+    setTimeout(() => setJudgement(null), 800);
   };
+
+  const toggleMusic = () => {
+    setIsMusicOn(prev => !prev);
+  };
+
+  // 배경음악 재생/정지
+  useEffect(() => {
+    if (audioRef.current) {
+      if (isMusicOn && lives > 0) {
+        audioRef.current.play().catch(err => console.log('Audio play failed:', err));
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isMusicOn, lives]);
 
   useEffect(() => {
     const noteGenerator = setInterval(() => {
@@ -250,19 +302,46 @@ export default function MusicPlay() {
   }, [notes, lives]); 
 
   const handleCloseModal = () => {
-      navigate('/std/main'); 
+      navigate('/std/main');
   };
+
+  // 라즈베리파이 버튼 입력 처리
+  useEffect(() => {
+    listenButton((choice) => {
+      console.log("음악 게임 버튼 선택:", choice);
+      handleLaneClick(choice);
+    });
+    return () => stopButton();
+  }, [handleLaneClick]);
+
   return (
     <Container>
+      {/* 배경음악 */}
+      <audio
+        ref={audioRef}
+        loop
+        preload="auto"
+      >
+        <source src="/musicbg.mp3" type="audio/mpeg" />
+      </audio>
+
       <HeartWrapper>
         {Array.from({ length: TOTAL_LIVES }).map((_, index) => (
-          <Heart 
+          <Heart
             key={index}
             src={index < lives ? HeartImg : EmptyHeartImg}
             alt={index < lives ? "Filled Heart" : "Empty Heart"}
           />
         ))}
       </HeartWrapper>
+
+      {/* 음악 on/off 토글 스위치 */}
+      <ToggleSwitch onClick={toggleMusic} $isOn={isMusicOn}>
+        <ToggleKnob $isOn={isMusicOn}>
+          {isMusicOn ? ' ' : ' '}
+        </ToggleKnob>
+      </ToggleSwitch>
+
       {notes.map(note => (
         <Note 
           key={note.id} 

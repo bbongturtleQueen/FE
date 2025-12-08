@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { css } from 'styled-components';
-import GameOver from '../../../components/gameover.jsx'; 
+import GameOver from '../../../components/gameover.jsx';
+import { listenButton, stopButton } from '../../../button.jsx';
 
 import HeartImg from '../../../assets/fillheart.png';
 import EmptyHeartImg from '../../../assets/emptyheart.png';
@@ -143,16 +144,15 @@ export default function TurtleGame() {
   const [lives, setLives] = useState(TOTAL_LIVES);
   const [score, setScore] = useState(0);
   const [stage, setStage] = useState(1);
-  
+
   const [pattern, setPattern] = useState([]);
   const [playerSequence, setPlayerSequence] = useState([]);
-  const [gameState, setGameState] = useState('IDLE'); 
-  
+  const [gameState, setGameState] = useState('IDLE');
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [isErrorModal, setIsErrorModal] = useState(false);
   const [blinkingSpot, setBlinkingSpot] = useState(null);
-
   const allSpots = Array.from({ length: NUM_SPOTS }, (_, i) => i);
 
   const generateNextPattern = useCallback(() => {
@@ -275,6 +275,14 @@ export default function TurtleGame() {
   const topSpots = allSpots.slice(0, 2);
   const bottomSpots = allSpots.slice(2, 5);
 
+  // 라즈베리파이 버튼 입력 처리
+  useEffect(() => {
+    listenButton((choice) => {
+      console.log("기억 게임 버튼 선택:", choice);
+      handleSpotClick(choice);
+    });
+    return () => stopButton();
+  }, [handleSpotClick]);
 
   return (
     <Container>

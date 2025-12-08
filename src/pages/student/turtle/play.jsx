@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import ResultModal from '../../../components/ResultModal';
+import { listenButton, stopButton } from '../../../button.jsx';
 import HeartImg from '../../../assets/fillheart.png';
 import EmptyHeartImg from '../../../assets/emptyheart.png';
 import TurtleImg from '../../../assets/exampleTurtle.png';
@@ -282,6 +283,19 @@ export default function TurtleGame() {
       navigate('/std/turtle/rank', { state: { score } });
     }
   };
+
+  // 라즈베리파이 버튼 입력을 백엔드로 전달
+  useEffect(() => {
+    listenButton((choice) => {
+      fetch(`${import.meta.env.VITE_API_URL}/api/turtle/button`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ choice }),
+      });
+      console.log("백엔드로 버튼 전달:", choice);
+    });
+    return () => stopButton();
+  }, []);
 
   // 로딩 중
   if (loading) {
