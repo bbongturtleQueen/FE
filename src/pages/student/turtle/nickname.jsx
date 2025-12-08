@@ -45,54 +45,17 @@ export default function TurtleNickname() {
 
   const inviteCode = location.state?.inviteCode;
 
-  const handleSubmit = async () => {
-    try {
-      // 1️⃣ 먼저 학생 등록 API 호출
-      const registerResponse = await fetch(`${import.meta.env.VITE_API_URL}/ppang/kid/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: nickname
-        })
-      });
+  const handleSubmit = () => {
+    // 학생 ID를 localStorage에 저장
+    localStorage.setItem('studentId', nickname);
 
-      const registerData = await registerResponse.json();
-
-      if (registerData.status !== 'success') {
-        alert("학생 등록에 실패했습니다!");
-        return;
+    // wait 건너뛰고 바로 ready로 이동
+    navigate('/std/turtle/ready', {
+      state: {
+        nickname,
+        inviteCode
       }
-
-      // 학생 ID를 localStorage에 저장
-      localStorage.setItem('studentId', nickname);
-
-      // 2️⃣ 방 참여 API 호출
-      const joinResponse = await fetch(`${import.meta.env.VITE_API_URL}/ppang/kid/enter-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          code: inviteCode,
-          id: nickname
-        })
-      });
-
-      const joinData = await joinResponse.json();
-
-      if (joinData.status === 'valid') {
-        navigate('/std/turtle/wait', {
-          state: {
-            nickname,
-            inviteCode
-          }
-        });
-      } else {
-        alert("방 참여에 실패했습니다!");
-      }
-
-    } catch (err) {
-      console.error(err);
-      alert("서버 오류!");
-    }
+    });
   };
 
   return (
