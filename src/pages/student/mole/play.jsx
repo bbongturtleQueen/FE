@@ -11,9 +11,9 @@ import BgImg from '../../../assets/molebg.png';
 
 const TOTAL_LIVES = 3;
 const NUM_SPOTS = 5;
-const MOLE_SHOW_TIME = 1500; // 두더지가 올라와있는 시간
-const MOLE_INTERVAL = 800; // 두더지 등장 간격
-const SLOW_CLICK_THRESHOLD = 1000; // 느린 클릭 기준 (1초)
+const MOLE_SHOW_TIME = 1500;
+const MOLE_INTERVAL = 800;
+const SLOW_CLICK_THRESHOLD = 1000;
 
 const MOLE_COLORS = {
     TITLE: '#000000',
@@ -133,19 +133,17 @@ export default function MolePlay() {
     const navigate = useNavigate();
     const [lives, setLives] = useState(TOTAL_LIVES);
     const [score, setScore] = useState(0);
-    const [activeMole, setActiveMole] = useState(null); // 화면 렌더링용
+    const [activeMole, setActiveMole] = useState(null);
     const [hitMole, setHitMole] = useState(null);
     const [showSlowMessage, setShowSlowMessage] = useState(false);
     const [gameOver, setGameOver] = useState(false);
 
     const moleStartTime = useRef(null);
     const gameInterval = useRef(null);
-    const moleTimeoutRef = useRef(null); // 두더지 퇴장 타이머 ID
-    const livesRef = useRef(TOTAL_LIVES); // 최신 lives 값
-
-    // 💡 NEW: 두더지가 현재 올라와 있는 위치를 최신 상태로 추적하는 Ref
+    const moleTimeoutRef = useRef(null);
+    const livesRef = useRef(TOTAL_LIVES);
     const activeMoleRef = useRef(null);
-    // lives/activeMole이 변경될 때마다 Ref 업데이트
+
     useEffect(() => {
         livesRef.current = lives;
     }, [lives]);
@@ -154,61 +152,49 @@ export default function MolePlay() {
         activeMoleRef.current = activeMole;
     }, [activeMole]);
 
-
     const allSpots = Array.from({ length: NUM_SPOTS }, (_, i) => i);
     const topSpots = allSpots.slice(0, 2);
     const bottomSpots = allSpots.slice(2, 5);
 
-    // 하트 감소 및 두더지 내림 로직
     const handleMoleTimeout = useCallback((spotIndex) => {
-        // 💡 Ref를 사용하여 타이머가 만료되었을 때, 해당 두더지가 여전히 활성화 상태인지 **최신 값**으로 확인
         if (activeMoleRef.current === spotIndex) {
             if (livesRef.current > 0) {
-                setLives(l => l - 1); // 하트 1개 감소
+                setLives(l => l - 1);
             }
-            // activeMole Ref와 State를 모두 null로 설정하여 다음 두더지가 올라올 수 있도록 함
             activeMoleRef.current = null;
             setActiveMole(null);
         }
 
         moleStartTime.current = null;
-        moleTimeoutRef.current = null; // 타이머 실행 완료
+        moleTimeoutRef.current = null;
     }, []);
 
-    // 두더지 올리기
     const showMole = useCallback(() => {
         if (livesRef.current <= 0) return;
 
-        // 1. **이전 두더지 타이머 정리** (중복 타이머 실행 방지)
         if (moleTimeoutRef.current) {
             clearTimeout(moleTimeoutRef.current);
             moleTimeoutRef.current = null;
         }
 
-        // 2. 💡 **Ref**를 사용하여 현재 두더지 등장 여부를 **최신 상태로** 확인
         if (activeMoleRef.current !== null) return;
 
         const randomSpot = Math.floor(Math.random() * NUM_SPOTS);
 
-        // activeMole Ref와 State를 모두 업데이트
         activeMoleRef.current = randomSpot;
         setActiveMole(randomSpot);
         setHitMole(null);
         moleStartTime.current = Date.now();
 
-        // 3. 퇴장 타이머 설정
         moleTimeoutRef.current = setTimeout(() => {
             handleMoleTimeout(randomSpot);
         }, MOLE_SHOW_TIME);
 
-    }, [handleMoleTimeout]); // activeMole dependency 제거 (이제 Ref를 사용하므로)
+    }, [handleMoleTimeout]);
 
-    // 두더지 클릭 핸들러
     const handleMoleClick = useCallback((spotIndex) => {
-        // 💡 **Ref**를 사용하여 현재 두더지 맞는지 **최신 상태로** 확인
         if (activeMoleRef.current !== spotIndex || hitMole !== null) return;
 
-        // 1. 두더지를 맞췄을 때, 예약된 퇴장 타이머를 즉시 취소합니다. (하트 감소 방지)
         if (moleTimeoutRef.current) {
             clearTimeout(moleTimeoutRef.current);
             moleTimeoutRef.current = null;
@@ -217,13 +203,11 @@ export default function MolePlay() {
         const clickTime = Date.now();
         const reactionTime = clickTime - moleStartTime.current;
 
-        // 2. 맞춤 처리: Ref와 State를 모두 null로 설정
         setHitMole(spotIndex);
         activeMoleRef.current = null;
         setActiveMole(null);
         setScore(prev => prev + 100);
 
-        // 느린 클릭 체크
         if (reactionTime > SLOW_CLICK_THRESHOLD) {
             setShowSlowMessage(true);
             setTimeout(() => {
@@ -231,15 +215,12 @@ export default function MolePlay() {
             }, 1000);
         }
 
-        // hit 이미지 표시 후 사라지기
         setTimeout(() => {
             setHitMole(null);
         }, 300);
-    }, [hitMole]); // activeMole dependency 제거
+    }, [hitMole]);
 
-    // 게임 시작 및 반복 로직 (showMole이 Ref만 참조하므로, 이 useEffect는 livesRef가 0이 될 때까지 안정적으로 실행됨)
     useEffect(() => {
-        // 이전 인터벌 정리
         if (gameInterval.current) {
             clearInterval(gameInterval.current);
             gameInterval.current = null;
@@ -247,7 +228,6 @@ export default function MolePlay() {
 
         if (livesRef.current <= 0) return;
 
-        // 초기 딜레이 후 게임 시작
         const startTimeout = setTimeout(() => {
             showMole();
 
@@ -275,7 +255,6 @@ export default function MolePlay() {
         };
     }, [showMole]);
 
-    // 생명이 0이 되면 게임 오버
     useEffect(() => {
         if (lives === 0 && !gameOver) {
             setGameOver(true);
@@ -293,6 +272,36 @@ export default function MolePlay() {
     const handleGameOverClose = () => {
         navigate('/std/main');
     };
+
+    // 라즈베리파이 WebSocket
+    useEffect(() => {
+        const ws = new WebSocket('ws://10.150.1.242:8765/ws');
+
+        ws.onopen = () => {
+            console.log('라즈베리파이 연결됨 (두더지 게임)');
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'button_press') {
+                const buttonNumber = data.button; // 1~5
+                console.log(`버튼 ${buttonNumber} 눌림`);
+                handleMoleClick(buttonNumber - 1); // 0~4 인덱스로 변환
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket 에러:', error);
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket 연결 끊김');
+        };
+
+        return () => {
+            ws.close();
+        };
+    }, [handleMoleClick]);
 
     return (
         <Container>

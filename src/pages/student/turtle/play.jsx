@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react'; // ⭐️ useEffect, useCallback, useRef 추가
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import ResultModal from '../../../components/ResultModal';
-// ⭐️ 불필요한 useLocation import 제거
 
 import HeartImg from '../../../assets/fillheart.png';
 import EmptyHeartImg from '../../../assets/emptyheart.png';
@@ -48,6 +47,7 @@ const Container = styled.div`
     background-position: center;
     position: relative;
     overflow: hidden;
+    user-select: none;
 `;
 
 const HeartWrapper = styled.div`
@@ -169,6 +169,19 @@ export default function TurtleGame() {
     const [score, setScore] = useState(0);
     const maxLives = 3;
 
+    // ⭐️ 라이브/모달 상태를 참조로 관리
+    const livesRef = useRef(lives);
+    const showResultModalRef = useRef(showResultModal);
+
+    useEffect(() => {
+        livesRef.current = lives;
+    }, [lives]);
+
+    useEffect(() => {
+        showResultModalRef.current = showResultModal;
+    }, [showResultModal]);
+
+
     // ⭐️ 더미 문제 데이터 (문제 수 10개)
     const problems = [
         { id: 1, num1: 2, operator: '+', num2: 3, answer: 5, options: [3, 4, 5, 6, 7] },
@@ -197,16 +210,10 @@ export default function TurtleGame() {
         '+': PlusImg,
         '-': MinusImg,
         '×': MultiplyImg,
-        // 백엔드에서 '/' 대신 '÷'를 사용하는 경우를 대비하여 수정
         '÷': DivideImg,
+        '/': DivideImg, // 슬래시 기호 추가
         '=': EqualsImg
     };
-
-    // ⭐️ 백엔드에서 '/' 기호가 넘어올 경우를 대비해 추가
-    if (!symbolImages['/']) {
-        symbolImages['/'] = DivideImg;
-    }
-
 
     const getNumberImages = (num, isAnswer = false) => {
         const images = isAnswer ? exNumberImages : numberImages;
@@ -215,26 +222,29 @@ export default function TurtleGame() {
 
     const currentProblem = problems[currentQuestion];
 
-    const handleAnswer = (answer) => {
+    // ⭐️ 버튼 클릭 및 WebSocket 처리를 위한 handleAnswer 함수 useCallback 적용
+    const handleAnswer = useCallback((answer) => {
+        // 모달이 열려있거나 라이프가 0이면 처리 중단
+        if (showResultModalRef.current || livesRef.current === 0) return;
+
         setSelectedAnswer(answer);
 
         if (answer === currentProblem.answer) {
             setIsCorrect(true);
-            setScore(score + 1); // 정답 시 점수 증가
+            setScore(prev => prev + 1);
             setShowResultModal(true);
         } else {
-            if (lives > 1) {
-                setLives(lives - 1);
+            if (livesRef.current > 1) {
+                setLives(prev => prev - 1);
                 setIsCorrect(false);
                 setShowResultModal(true);
             } else {
-                // 마지막 라이프에서 틀린 경우
                 setLives(0);
                 setIsCorrect(false);
-                setShowResultModal(true); // 모달을 통해 오답 표시 후, 다음 단계(Game Over)로 이동
+                setShowResultModal(true);
             }
         }
-    };
+    }, [currentProblem, setLives, setScore]); // currentProblem에 의존
 
     const handleNextQuestion = () => {
         setShowResultModal(false);
@@ -254,12 +264,48 @@ export default function TurtleGame() {
         }
     };
 
-    // ⭐️ 로딩 상태 제거: 더미 데이터를 사용하므로 로딩이 필요 없습니다.
-    /*
-    if (loading) {
-      // ... (이 블록은 제거됨)
-    }
-    */
+    // ⭐️ 라즈베리파이 WebSocket 연결 및 버튼 입력 처리
+    useEffect(() => {
+        const ws = new WebSocket('ws://10.150.1.242:8765/ws'); // IP 주소 확인 필요
+
+        ws.onopen = () => {
+            console.log('라즈베리파이 연결됨 (거북이 수학 게임)');
+        };
+
+        ws.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            if (data.type === 'button_press') {
+                const buttonNumber = data.button; // 1~5
+                console.log(`버튼 ${buttonNumber} 눌림`);
+
+                // 버튼 번호(1~5)는 문제의 옵션 인덱스(0~4)에 해당
+                // 현재 문제의 `options` 배열에서 해당 인덱스의 값을 선택
+
+                // 모달이 열려있지 않을 때만 버튼 입력 처리
+                if (!showResultModalRef.current && livesRef.current > 0) {
+                    const optionIndex = buttonNumber - 1; // 0~4 인덱스로 변환
+
+                    if (currentProblem && currentProblem.options[optionIndex] !== undefined) {
+                        const selectedOption = currentProblem.options[optionIndex];
+                        handleAnswer(selectedOption);
+                    }
+                }
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error('WebSocket 에러:', error);
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket 연결 끊김');
+        };
+
+        return () => {
+            ws.close();
+        };
+    }, [handleAnswer, currentProblem]);
+
 
     // 문제가 없는 경우 (더미 데이터가 비어 있을 경우만 해당)
     if (!currentProblem) {
@@ -274,7 +320,7 @@ export default function TurtleGame() {
                     color: '#EF4444',
                     fontWeight: 'bold'
                 }}>
-                    문제를 불러올 수 없습니다.
+                    문제를 불러올 수 없습니다. (더미 데이터가 비어있습니다.)
                 </div>
             </Container>
         );
@@ -291,6 +337,10 @@ export default function TurtleGame() {
                     />
                 ))}
             </HeartWrapper>
+
+            <ProgressText>
+                {currentQuestion + 1}{`번문제`} (총 {problems.length} 문제 중 {currentQuestion + 1})
+            </ProgressText>
 
             {/* 문제 */}
             <QuestionBox>
@@ -325,8 +375,8 @@ export default function TurtleGame() {
 
             {/* 답안 버튼 */}
             <AnswerGrid>
+                {/* currentProblem.options의 인덱스는 0부터 4까지이며, 이는 버튼 번호 1부터 5에 해당합니다. */}
                 {currentProblem.options.map((option, index) => (
-                    // ⭐️ React List Key 경고 방지를 위해 index 대신 option 값을 key로 사용하는 것이 더 좋습니다.
                     <AnswerButton
                         key={option}
                         onClick={() => handleAnswer(option)}
@@ -346,7 +396,6 @@ export default function TurtleGame() {
                 <ResultModal
                     isCorrect={isCorrect}
                     onNext={handleNextQuestion}
-                    // 라이프가 0일 때 오답이면 "게임 오버" 메시지를 표시하도록 수정할 수 있습니다.
                     message={!isCorrect && lives === 0 ? "마지막 라이프를 잃었습니다! 게임 오버" : isCorrect ? "정답!" : "오답!"}
                 />
             )}
