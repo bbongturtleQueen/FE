@@ -1,9 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
-import { io } from "socket.io-client";
 
-// Ubuntu 서버 IP
-const socket = io("http://10.150.1.242:5000");
 // std + tch
 import Start from './pages/start.jsx';
 

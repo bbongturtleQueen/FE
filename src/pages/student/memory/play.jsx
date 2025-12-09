@@ -60,7 +60,7 @@ const HeartWrapper = styled.div`
     top: 20px;
     left: 30px;
     display: flex;
-    gap: 8px;
+    gap: 15px;
 `;
 
 const Heart = styled.img`
@@ -154,14 +154,7 @@ export default function TurtleGame() {
     const [blinkingSpot, setBlinkingSpot] = useState(null);
     const allSpots = Array.from({ length: NUM_SPOTS }, (_, i) => i);
 
-    const generateNextPattern = useCallback(() => {
-        const newPattern = [...pattern];
-        newPattern.push(Math.floor(Math.random() * NUM_SPOTS));
-        setPattern(newPattern);
-        return newPattern;
-    }, [pattern]);
-
-    const startNewStage = useCallback((currentPattern = pattern) => {
+    const startNewStage = useCallback(() => {
         if (lives === 0) {
             setGameState('GAME_OVER');
             return;
@@ -173,13 +166,28 @@ export default function TurtleGame() {
         setIsModalOpen(false);
         setIsErrorModal(false);
 
-        let patternToShow = currentPattern;
-        if (currentPattern.length < stage) {
-            patternToShow = generateNextPattern();
+        // 패턴에 새로운 숫자 추가
+        const newPattern = [...pattern, Math.floor(Math.random() * NUM_SPOTS)];
+        setPattern(newPattern);
+
+        setTimeout(() => showPattern(newPattern), 1000);
+    }, [lives, pattern]);
+
+    const restartStage = useCallback(() => {
+        if (lives === 0) {
+            setGameState('GAME_OVER');
+            return;
         }
 
-        setTimeout(() => showPattern(patternToShow), 1000);
-    }, [lives, stage, pattern, generateNextPattern]);
+        setGameState('SHOWING_PATTERN');
+        setPlayerSequence([]);
+        setMessage('');
+        setIsModalOpen(false);
+        setIsErrorModal(false);
+
+        // 틀렸을 때는 같은 패턴 다시 보여주기
+        setTimeout(() => showPattern(pattern), 1000);
+    }, [lives, pattern]);
 
     const showPattern = (currentPattern) => {
         let i = 0;
@@ -225,7 +233,7 @@ export default function TurtleGame() {
 
             if (lives - 1 > 0) {
                 setTimeout(() => {
-                    startNewStage(pattern);
+                    restartStage();
                 }, 1500);
             }
             setPlayerSequence([]);
@@ -245,7 +253,7 @@ export default function TurtleGame() {
                 startNewStage();
             }, 1500);
         }
-    }, [gameState, isModalOpen, playerSequence, pattern, startNewStage, lives]);
+    }, [gameState, isModalOpen, playerSequence, pattern, startNewStage, restartStage, lives]);
 
     useEffect(() => {
         if (lives === 0 && gameState !== 'GAME_OVER') {
@@ -257,6 +265,7 @@ export default function TurtleGame() {
     }, [lives, gameState]);
 
     useEffect(() => {
+        // 첫 번째 패턴 생성 (길이 1)
         const newPattern = [Math.floor(Math.random() * NUM_SPOTS)];
         setPattern(newPattern);
         setTimeout(() => {
@@ -276,7 +285,7 @@ export default function TurtleGame() {
 
     // 라즈베리파이 WebSocket
     useEffect(() => {
-        const ws = new WebSocket('ws://10.150.1.242:8765/ws');
+        const ws = new WebSocket('ws://10.150.1.242:8765');
 
         ws.onopen = () => {
             console.log('라즈베리파이 연결됨 (메모리 게임)');

@@ -11,9 +11,9 @@ import BgImg from '../../../assets/molebg.png';
 
 const TOTAL_LIVES = 3;
 const NUM_SPOTS = 5;
-const MOLE_SHOW_TIME = 1500;
-const MOLE_INTERVAL = 800;
-const SLOW_CLICK_THRESHOLD = 1000;
+const MOLE_SHOW_TIME = 1500; // 두더지가 떠 있는 시간 (패턴과 무관)
+const MOLE_INTERVAL = 800; // 다음 두더지가 나오기까지의 쿨타임
+const SLOW_CLICK_THRESHOLD = 1000; // 느린 클릭 기준 (1초)
 
 const MOLE_COLORS = {
     TITLE: '#000000',
@@ -157,9 +157,10 @@ export default function MolePlay() {
     const bottomSpots = allSpots.slice(2, 5);
 
     const handleMoleTimeout = useCallback((spotIndex) => {
+        // 현재 타임아웃된 두더지가 아직 화면에 떠 있었다면 (맞춰지지 않았다면)
         if (activeMoleRef.current === spotIndex) {
             if (livesRef.current > 0) {
-                setLives(l => l - 1);
+                setLives(l => l - 1); // 놓쳤으므로 생명 감소
             }
             activeMoleRef.current = null;
             setActiveMole(null);
@@ -172,11 +173,13 @@ export default function MolePlay() {
     const showMole = useCallback(() => {
         if (livesRef.current <= 0) return;
 
+        // 기존 타이머 클리어
         if (moleTimeoutRef.current) {
             clearTimeout(moleTimeoutRef.current);
             moleTimeoutRef.current = null;
         }
 
+        // 이미 두더지가 떠있다면 새로 띄우지 않음 (두더지 하나만 활성화)
         if (activeMoleRef.current !== null) return;
 
         const randomSpot = Math.floor(Math.random() * NUM_SPOTS);
@@ -186,6 +189,7 @@ export default function MolePlay() {
         setHitMole(null);
         moleStartTime.current = Date.now();
 
+        // 두더지가 떠 있는 시간 설정
         moleTimeoutRef.current = setTimeout(() => {
             handleMoleTimeout(randomSpot);
         }, MOLE_SHOW_TIME);
@@ -193,8 +197,10 @@ export default function MolePlay() {
     }, [handleMoleTimeout]);
 
     const handleMoleClick = useCallback((spotIndex) => {
+        // 현재 떠 있는 두더지와 클릭된 인덱스가 같고, 이미 맞춘 두더지가 아니어야 함
         if (activeMoleRef.current !== spotIndex || hitMole !== null) return;
 
+        // 두더지를 맞췄으므로 시간 초과 타이머 해제
         if (moleTimeoutRef.current) {
             clearTimeout(moleTimeoutRef.current);
             moleTimeoutRef.current = null;
@@ -203,11 +209,12 @@ export default function MolePlay() {
         const clickTime = Date.now();
         const reactionTime = clickTime - moleStartTime.current;
 
-        setHitMole(spotIndex);
+        setHitMole(spotIndex); // 맞춘 두더지 이미지로 변경
         activeMoleRef.current = null;
         setActiveMole(null);
         setScore(prev => prev + 100);
 
+        // 느린 클릭 감지
         if (reactionTime > SLOW_CLICK_THRESHOLD) {
             setShowSlowMessage(true);
             setTimeout(() => {
@@ -215,11 +222,13 @@ export default function MolePlay() {
             }, 1000);
         }
 
+        // 맞춘 이미지를 잠시 보여주고 숨김
         setTimeout(() => {
             setHitMole(null);
         }, 300);
     }, [hitMole]);
 
+    // 메인 게임 루프 (두더지 생성 간격 조절)
     useEffect(() => {
         if (gameInterval.current) {
             clearInterval(gameInterval.current);
@@ -228,9 +237,11 @@ export default function MolePlay() {
 
         if (livesRef.current <= 0) return;
 
+        // 게임 시작 후 1초 대기 후 첫 두더지 생성
         const startTimeout = setTimeout(() => {
             showMole();
 
+            // 이후 MOLE_SHOW_TIME + MOLE_INTERVAL 간격으로 두더지 생성 반복
             gameInterval.current = setInterval(() => {
                 if (livesRef.current > 0) {
                     showMole();
@@ -255,9 +266,11 @@ export default function MolePlay() {
         };
     }, [showMole]);
 
+    // 게임 오버 처리
     useEffect(() => {
         if (lives === 0 && !gameOver) {
             setGameOver(true);
+            // 모든 타이머 정리
             if (gameInterval.current) {
                 clearInterval(gameInterval.current);
                 gameInterval.current = null;
@@ -273,20 +286,31 @@ export default function MolePlay() {
         navigate('/std/main');
     };
 
-    // 라즈베리파이 WebSocket
+    // 🔥 라즈베리파이 WebSocket (1:1 매핑 유지)
     useEffect(() => {
-        const ws = new WebSocket('ws://10.150.1.242:8765/ws');
+        // 서버 주소 확인: ws://10.150.1.242:8765
+        const ws = new WebSocket('ws://10.150.1.242:8765'); 
 
         ws.onopen = () => {
             console.log('라즈베리파이 연결됨 (두더지 게임)');
         };
 
         ws.onmessage = (event) => {
-            const data = JSON.parse(event.data);
-            if (data.type === 'button_press') {
-                const buttonNumber = data.button; // 1~5
-                console.log(`버튼 ${buttonNumber} 눌림`);
-                handleMoleClick(buttonNumber - 1); // 0~4 인덱스로 변환
+            try {
+                const data = JSON.parse(event.data);
+                if (data.type === 'button_press') {
+                    const buttonNumber = data.button; // 서버에서 1~5 전송
+                    console.log(`버튼 ${buttonNumber} 눌림`);
+                    
+                    // 1:1 매핑 유지: 버튼 1 -> 인덱스 0, 버튼 5 -> 인덱스 4
+                    const spotIndex = buttonNumber - 1; 
+                    
+                    if (spotIndex >= 0 && spotIndex < NUM_SPOTS) {
+                        handleMoleClick(spotIndex); 
+                    }
+                }
+            } catch (error) {
+                 console.error('WebSocket 메시지 파싱 오류:', error, event.data);
             }
         };
 
@@ -314,6 +338,9 @@ export default function MolePlay() {
                     />
                 ))}
             </HeartWrapper>
+            
+            {/* 🔴 [제거 완료] 게임 화면 상단 점수 표시 제거됨 */}
+
             {showSlowMessage && (
                 <MessageOverlay $isShowing={showSlowMessage}>
                     좀 더 빠르게!
