@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { css, keyframes } from 'styled-components';
 import GameOver from '../../../components/gameover.jsx';
-import { listenButton, stopButton } from '../../../button.jsx';
 
 import HeartImg from '../../../assets/fillheart.png';
 import EmptyHeartImg from '../../../assets/emptyheart.png';
@@ -294,15 +293,6 @@ export default function MolePlay() {
     const handleGameOverClose = () => {
         navigate('/std/main');
     };
-
-    // 라즈베리파이 버튼 입력 처리
-    useEffect(() => {
-        listenButton((choice) => {
-            console.log("두더지 버튼 선택:", choice);
-            handleMoleClick(choice);
-        });
-        return () => stopButton();
-    }, [handleMoleClick]);
 
     return (
         <Container>

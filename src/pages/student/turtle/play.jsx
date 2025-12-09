@@ -274,7 +274,7 @@ export default function TurtleGame() {
                     color: '#EF4444',
                     fontWeight: 'bold'
                 }}>
-                    문제를 불러올 수 없습니다. (더미 데이터가 비어있습니다.)
+                    문제를 불러올 수 없습니다.
                 </div>
             </Container>
         );
@@ -291,10 +291,6 @@ export default function TurtleGame() {
                     />
                 ))}
             </HeartWrapper>
-
-            <ProgressText>
-                {currentQuestion + 1}{`번문제`} (총 {problems.length} 문제 중 {currentQuestion + 1})
-            </ProgressText>
 
             {/* 문제 */}
             <QuestionBox>

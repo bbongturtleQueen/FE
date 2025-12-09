@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes, css } from 'styled-components';
 import GameOver from '../../../components/gameover.jsx';
-import { listenButton, stopButton } from '../../../button.jsx';
 
 import HeartImg from '../../../assets/fillheart.png';
 import EmptyHeartImg from '../../../assets/emptyheart.png';
@@ -306,13 +305,6 @@ export default function MusicPlay() {
   };
 
   // 라즈베리파이 버튼 입력 처리
-  useEffect(() => {
-    listenButton((choice) => {
-      console.log("음악 게임 버튼 선택:", choice);
-      handleLaneClick(choice);
-    });
-    return () => stopButton();
-  }, [handleLaneClick]);
 
   return (
     <Container>
