@@ -173,21 +173,14 @@ const ClickTargetWrapper = styled.div`
 const ClickTarget = styled.div`
     width: 100px;
     height: 100px;
-    background-color: rgba(255, 255, 255, 0.2);
+    background-color: transparent;
     border-radius: 10px;
-    opacity: 1;
+    opacity: 0;
     cursor: pointer;
     z-index: 10;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: bold;
-    color: white;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.5);
-
-    &:hover {
-        background-color: rgba(255, 255, 255, 0.4);
-    }
 `;
 
 export default function MusicPlay() {
@@ -311,7 +304,7 @@ export default function MusicPlay() {
         navigate('/std/main');
     };
 
-    // 라즈베리파이 WebSocket
+    // 라즈베리파이 WebSocket 연결
     useEffect(() => {
         const ws = new WebSocket('ws://10.150.1.242:8765/ws');
 
@@ -381,9 +374,7 @@ export default function MusicPlay() {
                     <ClickTarget
                         key={index}
                         onClick={() => handleLaneClick(index)}
-                    >
-                        {index + 1}
-                    </ClickTarget>
+                    />
                 ))}
             </ClickTargetWrapper>
 
