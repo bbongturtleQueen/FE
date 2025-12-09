@@ -9,7 +9,7 @@ import EumImg from '../../../assets/eum.png';
 import BgImg from '../../../assets/musicbg.png';
 
 const TOTAL_LIVES = 3;
-const NOTE_SPEED = 5;
+const NOTE_SPEED = 4;
 const CLICK_ZONE_Y = 600;
 const JUDGEMENT_TOLERANCE = 50;
 const LANE_COUNT = 5;
@@ -234,7 +234,7 @@ export default function MusicPlay() {
                 state: 'active',
             };
             setNotes(prevNotes => [...prevNotes, newNote]);
-        }, 800);
+        }, 1700);
 
         return () => clearInterval(noteGenerator);
     }, []);
