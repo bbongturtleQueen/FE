@@ -9,11 +9,9 @@ import StdMain from './pages/student/stdmain.jsx';
 // turtle game
 import TurtleEnterCode from './pages/student/turtle/entercode.jsx';
 import TurtleNickname from './pages/student/turtle/nickname.jsx';
-import TurtleWait from './pages/student/turtle/wait.jsx';
 import TurtleReady from './pages/student/turtle/ready.jsx';
 import TurtlePlay from './pages/student/turtle/play.jsx';
 import GameOver from './pages/student/turtle/gameover.jsx';
-import Rank from './pages/student/turtle/rank.jsx';
 // memory game
 import MemoryReady from './pages/student/memory/ready.jsx';
 import MemoryPlay from './pages/student/memory/play.jsx';
@@ -80,11 +78,9 @@ export default function App() {
 
         <Route path="/std/turtle/entercode" element={<TurtleEnterCode />} />
         <Route path="/std/turtle/nickname" element={<TurtleNickname />} />
-        <Route path="/std/turtle/wait" element={<TurtleWait />} />
         <Route path="/std/turtle/ready" element={<TurtleReady />} />
         <Route path="/std/turtle/play" element={<TurtlePlay />} />
         <Route path="/std/turtle/gameover" element={<GameOver />} />
-        <Route path="/std/turtle/rank" element={<Rank />} />
 
         <Route path="/std/memory/ready" element={<MemoryReady />} />
         <Route path="/std/memory/play" element={<MemoryPlay />} />

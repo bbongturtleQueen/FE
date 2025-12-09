@@ -8,8 +8,6 @@ import EmptyHeartImg from '../../../assets/emptyheart.png';
 import TurtleImg from '../../../assets/exampleTurtle.png';
 import BgImg from '../../../assets/turtlebg.png';
 
-// ... (Number/Symbol Imports remain unchanged) ...
-
 import Num0 from '../../../assets/number/0.png';
 import Num1 from '../../../assets/number/1.png';
 import Num2 from '../../../assets/number/2.png';
@@ -37,8 +35,6 @@ import MinusImg from '../../../assets/number/minus.png';
 import MultiplyImg from '../../../assets/number/multiply.png';
 import DivideImg from '../../../assets/number/divide.png';
 import EqualsImg from '../../../assets/number/equal.png';
-
-// ... (Styled components remain unchanged) ...
 
 const Container = styled.div`
   width: 1180px;
@@ -230,65 +226,21 @@ export default function TurtleGame() {
     setShowResultModal(false);
 
     if (lives === 0) {
-      navigate('/std/turtle/gameover', { state: { score } });
+      navigate('/std/turtle/gameover', { state: { score: score * 1000, endReason: 'livesZero' } });
       return;
     }
 
-    if (currentQuestion < problems.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-      setSelectedAnswer(null);
-    } else {
-      navigate('/std/turtle/rank', { state: { score } });
+    if (currentQuestion === problems.length - 1) {
+      navigate('/std/turtle/gameover', { state: { score: score * 1000, endReason: 'allSolved' } });
+      return;
     }
+
+    setCurrentQuestion(currentQuestion + 1);
+    setSelectedAnswer(null);
   };
 
-  // 🔥 [핵심 수정 부분] WebSocket 버튼 입력 연결 및 매핑 적용
   useEffect(() => {
-    // ⭐️ 서버가 전송하는 버튼 번호(1~5)를 화면상의 선택지 인덱스(0~4)로 변환하는 매핑
-    // 서버 전송 버튼: 1, 2, 3, 4, 5
-    // 원하는 매칭 순서: 3, 1, 4, 2, 5 (Python button_map=[2, 0, 3, 1, 4]의 결과)
-    //
-    // [1, 2, 3, 4, 5] -> 버튼 번호 (서버에서 전송)
-    // [1, 3, 4, 0, 2] -> 선택지 인덱스 (0~4)로 변환
-    // [버튼 1] -> 선택지 1 (인덱스 1)
-    // [버튼 2] -> 선택지 3 (인덱스 3)
-    // [버튼 3] -> 선택지 4 (인덱스 4) // <--- 이 부분이 고객님의 요청과 다릅니다.
-    //
-    // 고객님의 매핑: [3, 1, 4, 2, 5] 순서로 레인이 눌리길 원하셨습니다.
-    // 이는 서버가 [3, 1, 4, 2, 5]를 전송한다고 가정했을 때,
-    // [3] 버튼이 레인 1 (인덱스 0)을 눌러야 한다는 의미입니다.
-    //
-    // ⭐️ [최종 매핑]: 서버가 전송하는 버튼 번호(1~5)를,
-    //                  프론트엔드에서 원하는 선택지 인덱스(0~4)로 변환
-    //
-    // 버튼 번호 (Server's Output): 1  2  3  4  5
-    // 원하는 선택지 인덱스 (Client's Lane): 1  3  4  2  5 (0~4로 변환)
-    const buttonToOptionIndexMap = {
-        1: 1, // 버튼 1 -> 옵션 인덱스 1 (화면상 2번째)
-        2: 3, // 버튼 2 -> 옵션 인덱스 3 (화면상 4번째)
-        3: 4, // 버튼 3 -> 옵션 인덱스 4 (화면상 5번째)
-        4: 2, // 버튼 4 -> 옵션 인덱스 2 (화면상 3번째)
-        5: 0, // 버튼 5 -> 옵션 인덱스 0 (화면상 1번째)
-    };
-    
-    // **잠깐, Python 서버의 매핑을 프론트에서 역으로 따라가야 합니다.**
-    // Python 서버의 매핑: [2, 0, 3, 1, 4]
-    // 이는 0번 핀(GPIO 24)이 '버튼 3'을 전송한다는 의미입니다.
-    // 따라서, 프론트에서는 '버튼 3'이 눌렸을 때, 물리적으로 0번 핀에 연결된 선택지를 눌러야 합니다.
-    //
-    // 물리적 핀 인덱스: 0  1  2  3  4
-    // 서버 전송 버튼: 3  1  4  2  5
-    // 프론트의 원하는 옵션 인덱스: 0  1  2  3  4 (화면상의 순서)
-    //
-    // [역매핑 테이블]: 서버 버튼 번호 -> 프론트의 선택지 인덱스
-    const REVERSE_MAPPING = {
-        3: 0, // 버튼 3 (서버 출력) -> 0번 옵션 (화면상 1번째)
-        1: 1, // 버튼 1 (서버 출력) -> 1번 옵션 (화면상 2번째)
-        4: 2, // 버튼 4 (서버 출력) -> 2번 옵션 (화면상 3번째)
-        2: 3, // 버튼 2 (서버 출력) -> 3번 옵션 (화면상 4번째)
-        5: 4, // 버튼 5 (서버 출력) -> 4번 옵션 (화면상 5번째)
-    };
-    
+    const REVERSE_MAPPING = { 3: 0, 1: 1, 4: 2, 2: 3, 5: 4 };
     const ws = new WebSocket('ws://10.150.1.242:8765');
 
     ws.onopen = () => console.log('라즈베리파이 연결됨 (거북이 수학 게임)');
@@ -296,20 +248,13 @@ export default function TurtleGame() {
     ws.onmessage = (event) => {
       const data = JSON.parse(event.data);
       if (data.type === 'button_press') {
-        const buttonNumber = data.button; // 서버에서 매핑된 버튼 번호 (예: 3, 1, 4, 2, 5 중 하나)
-        console.log(`서버 버튼 ${buttonNumber} 눌림`);
-
+        const buttonNumber = data.button;
         const problem = currentProblemRef.current;
         if (problem && !showResultModalRef.current && livesRef.current > 0) {
-          
-          // 🔥 역매핑 테이블을 사용하여 서버 버튼 번호를 실제 선택지 인덱스로 변환
           const optionIndex = REVERSE_MAPPING[buttonNumber];
-
           if (optionIndex !== undefined) {
             const selectedOption = problem.options[optionIndex];
             if (selectedOption !== undefined) handleAnswer(selectedOption);
-          } else {
-            console.error(`매핑되지 않은 버튼 번호: ${buttonNumber}`);
           }
         }
       }
@@ -322,15 +267,9 @@ export default function TurtleGame() {
   }, [handleAnswer]);
 
   if (!currentProblem) {
-// ... (Render logic remains unchanged) ...
-
     return (
       <Container>
-        <div style={{
-          position: 'absolute', top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)', fontSize: '24px',
-          color: '#EF4444', fontWeight: 'bold'
-        }}>
+        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', fontSize: '24px', color: '#EF4444', fontWeight: 'bold' }}>
           문제를 불러올 수 없습니다.
         </div>
       </Container>
@@ -346,7 +285,7 @@ export default function TurtleGame() {
       </HeartWrapper>
 
       <ProgressText>
-        {currentQuestion + 1}번문제 (총 {problems.length} 문제 중 {currentQuestion + 1})
+        {currentQuestion + 1} | {problems.length}
       </ProgressText>
 
       <QuestionBox>
@@ -383,7 +322,7 @@ export default function TurtleGame() {
         <ResultModal
           isCorrect={isCorrect}
           onNext={handleNextQuestion}
-          message={!isCorrect && lives === 0 ? "마지막 라이프를 잃었습니다! 게임 오버" : isCorrect ? "정답!" : "오답!"}
+          message={!isCorrect && lives === 0 ? "모든 생명을 잃었습니다! 게임 오버" : isCorrect ? "정답!" : "오답!"}
         />
       )}
     </Container>
