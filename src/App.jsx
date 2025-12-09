@@ -30,7 +30,6 @@ import Signup from './pages/teacher/signup.jsx';
 import Ready from './pages/teacher/ready.jsx';
 import MakeProblem from './pages/teacher/makeproblem.jsx';
 import ChooseSet from './pages/teacher/chooseset.jsx';
-import EnterCode from './pages/teacher/entercode.jsx';
 
 // 기본 배경음악 컴포넌트
 function BackgroundMusic() {
@@ -98,7 +97,6 @@ export default function App() {
         <Route path="/tch/ready" element={<Ready/>}/>
         <Route path="/tch/makeproblem" element={<MakeProblem />} />
         <Route path="/tch/chooseset" element={<ChooseSet/>} />
-        <Route path="/tch/entercode" element={<EnterCode/>} />
       </Routes>
     </BrowserRouter>
   );
